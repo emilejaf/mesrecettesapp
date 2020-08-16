@@ -107,7 +107,7 @@ class _BodyState extends State<Body> {
     }
   }
 
-  void rightPress(BuildContext context, bool isLast) {
+  void rightPress(BuildContext context, bool isLast) async {
     if (isLast) {
       final String id = isEditing ? widget.edit.id : Uuid().v4();
       Recipe recipe = new Recipe(
@@ -124,7 +124,7 @@ class _BodyState extends State<Body> {
       Recipes recipes = Provider.of<Recipes>(context, listen: false);
 
       if (isEditing) {
-        recipes.editRecipe(widget.edit, recipe);
+        recipes.editRecipe(recipe);
       } else {
         recipes.addRecipe(recipe);
       }
@@ -132,7 +132,7 @@ class _BodyState extends State<Body> {
 
       if (isEditing) {
         if (widget.defaultSelectedCategories != selectedCategories) {
-          categories.removeRecipeId(id);
+          await categories.removeRecipeId(id);
           categories.addRecipeId(selectedCategories, id);
         }
       } else {

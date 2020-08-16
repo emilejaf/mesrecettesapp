@@ -31,6 +31,8 @@ dependencies:
   flutter_svg:
   provider:
   uuid: 2.2.0
+  sqflite:
+  path:
   
 
 dev_dependencies:

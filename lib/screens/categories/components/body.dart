@@ -26,11 +26,15 @@ class Body extends StatelessWidget {
                         ? SizeConfig.defaultSize * 2
                         : 0,
                 childAspectRatio: 5.75),
-            itemBuilder: (context, index) => Center(
-                child: buildCategoryCard(
-                    title: categories.items[index].name,
-                    deleteCategory: () => {categories.removeCategoryAt(index)},
-                    editCategory: () => editCategory(categories.items[index]))),
+            itemBuilder: (context, index) {
+              Category category = categories.items[index];
+              return Center(
+                  child: buildCategoryCard(
+                      title: category.name,
+                      deleteCategory: () =>
+                          {categories.removeCategory(category.name)},
+                      editCategory: () => editCategory(category)));
+            },
           ),
         );
       } else {
