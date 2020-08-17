@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:mesrecettes/models/category.dart';
 import 'package:mesrecettes/models/recipe.dart';
 import 'package:mesrecettes/screens/recipe/recipe_screen.dart';
 import 'package:mesrecettes/size_config.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
@@ -52,9 +55,11 @@ class _BodyState extends State<Body> {
   //Page 2
   List<Category> selectedCategories;
   // Page 3
+  File image;
+  // Page 4
   List<String> ingredients;
   List<String> steps;
-  // Page 4
+  // Page 5
   String notes;
 
   @override
@@ -84,6 +89,10 @@ class _BodyState extends State<Body> {
 
     selectedCategories = isEditing ? [...widget.defaultSelectedCategories] : [];
 
+    image = widget.edit != null
+        ? widget.edit.hasImage ? File(widget.edit.path) : null
+        : null;
+
     ingredients = isEditing ? widget.edit.ingredients : [''];
     steps = isEditing ? widget.edit.steps : [''];
     notes = isEditing ? widget.edit.notes : '';
@@ -98,7 +107,7 @@ class _BodyState extends State<Body> {
 
   void leftPress(bool isFirst) {
     if (isFirst) {
-      Navigator.pop(context);
+      Navigator.pop(this.context);
     } else {
       setState(() {
         currentPage = currentPage - 1;
@@ -107,11 +116,31 @@ class _BodyState extends State<Body> {
     }
   }
 
-  void rightPress(BuildContext context, bool isLast) async {
+  void rightPress(bool isLast) async {
     if (isLast) {
       final String id = isEditing ? widget.edit.id : Uuid().v4();
+      String path;
+      // Save photo
+      if (image != null) {
+        final String appPath = (await getApplicationDocumentsDirectory()).path;
+        path = join(appPath, '$id.jpg');
+        if (widget.edit != null &&
+            widget.edit.hasImage &&
+            widget.edit.path != image.path) {
+          // delete phto
+          await File(path).delete();
+        }
+        // save photo
+        if (image.path != path) {
+          imageCache.clear();
+          image.copy(path);
+        }
+      }
+      // Add recipe
       Recipe recipe = new Recipe(
           id: id,
+          path: path ?? '',
+          hasImage: image != null ? true : false,
           name: recipeName,
           prepTime: prepTime,
           cookTime: cookTime,
@@ -121,14 +150,16 @@ class _BodyState extends State<Body> {
           steps: steps.where((step) => step != '').toList(),
           notes: notes);
 
-      Recipes recipes = Provider.of<Recipes>(context, listen: false);
+      Recipes recipes = Provider.of<Recipes>(this.context, listen: false);
 
       if (isEditing) {
         recipes.editRecipe(recipe);
       } else {
         recipes.addRecipe(recipe);
       }
-      Categories categories = Provider.of<Categories>(context, listen: false);
+      // Add recipe to selected categories
+      Categories categories =
+          Provider.of<Categories>(this.context, listen: false);
 
       if (isEditing) {
         if (widget.defaultSelectedCategories != selectedCategories) {
@@ -139,10 +170,10 @@ class _BodyState extends State<Body> {
         categories.addRecipeId(selectedCategories, id);
       }
 
-      Navigator.pop(context);
+      Navigator.pop(this.context);
       if (isEditing) {
         Navigator.pushReplacement(
-            context,
+            this.context,
             MaterialPageRoute(
               builder: (context) => RecipeScreen(
                 recipe: recipe,
@@ -187,7 +218,16 @@ class _BodyState extends State<Body> {
               controller: selectedCategoriesController,
               defaultCategories: selectedCategories,
             )),
-      Page(title: 'Photo de la recette', body: Page3()),
+      Page(
+          title: 'Photo de la recette',
+          body: Page3(
+            image: image,
+            callback: (File newImage) {
+              setState(() {
+                image = newImage;
+              });
+            },
+          )),
       Page(
         title: 'Ingrédients',
         body: Page4(
@@ -219,10 +259,10 @@ class _BodyState extends State<Body> {
       controller: _controller,
       itemCount: pages.length,
       itemBuilder: (context, index) {
-        bool active = currentPage == index;
+        final bool active = currentPage == index;
         final Page page = pages[index];
-        final bool isFirst = index == 0 ? true : false;
-        final bool isLast = index == pages.length - 1 ? true : false;
+        final bool isFirst = index == 0;
+        final bool isLast = index == pages.length - 1;
         final double blur = active ? 20 : 0;
         final double offset = active ? 5 : 0;
         final double top = active ? 25 : 100;
@@ -260,7 +300,7 @@ class _BodyState extends State<Body> {
                 leftText: leftText,
                 leftPress: () => leftPress(isFirst),
                 rightText: rightText,
-                rightPress: () => rightPress(context, isLast),
+                rightPress: () => rightPress(isLast),
               )
             ],
           ),

@@ -3,6 +3,7 @@ import 'package:mesrecettes/components/my_drawer.dart';
 import 'package:mesrecettes/models/category.dart';
 import 'package:mesrecettes/screens/create_recipe/create_recipe_screen.dart';
 import 'package:mesrecettes/screens/home/components/body.dart';
+import 'package:mesrecettes/screens/search/search_screen.dart';
 import 'package:mesrecettes/size_config.dart';
 import 'package:provider/provider.dart';
 
@@ -20,13 +21,16 @@ class HomeScreen extends StatelessWidget {
             actions: <Widget>[
               IconButton(
                 icon: Icon(Icons.search),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => SearchScreen()));
+                },
               )
             ],
             bottom: TabBar(
               isScrollable: true,
               unselectedLabelColor: Colors.black.withOpacity(0.3),
-              indicatorColor: Colors.black,
+              indicatorColor: Theme.of(context).primaryColor,
               tabs: [
                 Tab(
                   text: 'Tout',

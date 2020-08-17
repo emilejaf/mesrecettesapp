@@ -51,13 +51,19 @@ class CategoriesScreen extends StatelessWidget {
           ),
           actions: [
             FlatButton(
-              child: Text('Annuler'),
+              child: Text(
+                'Annuler',
+                style: Theme.of(context).accentTextTheme.button,
+              ),
               onPressed: () {
                 Navigator.pop(context);
               },
             ),
             FlatButton(
-              child: Text('Terminer'),
+              child: Text(
+                'Terminer',
+                style: Theme.of(context).accentTextTheme.button,
+              ),
               onPressed: () {
                 Categories categories =
                     Provider.of<Categories>(context, listen: false);

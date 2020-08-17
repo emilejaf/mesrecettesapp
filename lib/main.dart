@@ -30,8 +30,11 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'MesRecettes',
         theme: ThemeData(
+          buttonColor: Colors.lightGreen,
           primaryIconTheme: IconThemeData(color: Colors.black),
           primaryTextTheme: Typography.blackCupertino,
+          accentTextTheme:
+              TextTheme(button: TextStyle(color: Colors.lightGreen)),
           brightness: Brightness.light,
           primaryColor: Colors.black,
           accentColor: Colors.lightGreen,

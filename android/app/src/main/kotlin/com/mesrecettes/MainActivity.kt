@@ -1,4 +1,4 @@
-package com.example.mesrecettes
+package com.mesrecettes
 
 import io.flutter.embedding.android.FlutterActivity
 

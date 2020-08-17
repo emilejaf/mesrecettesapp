@@ -4,10 +4,12 @@ import 'package:mesrecettes/size_config.dart';
 class Item {
   String title;
   String emptyText;
+  bool bullet;
   List<String> list;
   String value;
 
-  Item({this.title, this.list, this.value, this.emptyText});
+  Item(
+      {this.title, this.list, this.value, this.emptyText, this.bullet = false});
 }
 
 class RecipeExpansionPanel extends StatefulWidget {
@@ -32,7 +34,8 @@ class _RecipeExpansionPanelState extends State<RecipeExpansionPanel> {
       new Item(
           title: 'Ingrédients',
           emptyText: 'Aucun ingrédient',
-          list: widget.ingredients),
+          list: widget.ingredients,
+          bullet: true),
       new Item(title: 'Étapes', emptyText: 'Aucune étape', list: widget.steps),
       new Item(title: 'Notes', emptyText: 'Aucune note', value: widget.notes)
     ];
@@ -69,15 +72,22 @@ class _RecipeExpansionPanelState extends State<RecipeExpansionPanel> {
       return ListTile(
         title: Column(
             children: item.list
+                .asMap()
+                .entries
                 .map(
-                  (text) => Row(
-                    children: [
-                      Text(
-                        '• ',
-                        style: TextStyle(fontSize: 30),
-                      ),
-                      Text(text)
-                    ],
+                  (entry) => Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      children: [
+                        Text(
+                          item.bullet
+                              ? '• '
+                              : (entry.key + 1).toString() + ' - ',
+                          style: TextStyle(fontSize: item.bullet ? 30 : null),
+                        ),
+                        Text(entry.value)
+                      ],
+                    ),
                   ),
                 )
                 .toList()),
