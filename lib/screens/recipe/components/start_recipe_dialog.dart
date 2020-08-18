@@ -83,13 +83,13 @@ class _StartRecipeDialogState extends State<StartRecipeDialog> {
                                 top: defaultSize * 1, left: defaultSize * 1),
                             child: Text(
                               'Étape ' + (index + 1).toString(),
-                              style: TextStyle(fontSize: defaultSize * 1.6),
+                              style: TextStyle(fontSize: defaultSize * 2.4),
                             ),
                           )),
                           Center(
                               child: Text(
                             widget.steps[index],
-                            style: TextStyle(fontSize: defaultSize * 2.4),
+                            style: TextStyle(fontSize: defaultSize * 1.2),
                           )),
                         ]),
                       ),

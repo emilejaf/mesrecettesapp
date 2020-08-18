@@ -1,12 +1,24 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:mesrecettes/models/category.dart';
 import 'package:mesrecettes/models/nav_item.dart';
 import 'package:mesrecettes/screens/home/home_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
+import 'constants.dart';
 import 'models/recipe.dart';
 
+FirebaseAnalytics analytics;
+
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  analytics = FirebaseAnalytics();
+  FlutterError.onError = Crashlytics.instance.recordFlutterError;
+
+  showConsentForm();
+
   runApp(MyApp());
 }
 

@@ -71,22 +71,17 @@ class _RecipeExpansionPanelState extends State<RecipeExpansionPanel> {
     if (item.list != null && item.list.length > 0) {
       return ListTile(
         title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: item.list
                 .asMap()
                 .entries
                 .map(
                   (entry) => Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          item.bullet
-                              ? '• '
-                              : (entry.key + 1).toString() + ' - ',
-                          style: TextStyle(fontSize: item.bullet ? 30 : null),
-                        ),
-                        Text(entry.value)
-                      ],
+                    child: Text(
+                      item.bullet
+                          ? '• ' + entry.value
+                          : (entry.key + 1).toString() + ' - ' + entry.value,
                     ),
                   ),
                 )

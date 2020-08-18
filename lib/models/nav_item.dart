@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mesrecettes/screens/categories/categories_screen.dart';
 import 'package:mesrecettes/screens/create_recipe/create_recipe_screen.dart';
 import 'package:mesrecettes/screens/home/home_screen.dart';
+import 'package:mesrecettes/screens/settings/settings_screen.dart';
 
 class NavItem {
   final int id;
@@ -28,5 +29,6 @@ class NavItems extends ChangeNotifier {
         title: 'Créer une recette',
         destination: CreateRecipeScreen(),
         replace: false),
+    NavItem(id: 4, title: 'Paramètres', destination: SettingsScreen())
   ];
 }

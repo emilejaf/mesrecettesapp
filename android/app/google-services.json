@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "110282784517",
+    "firebase_url": "https://mesrecettes-2b213.firebaseio.com",
+    "project_id": "mesrecettes-2b213",
+    "storage_bucket": "mesrecettes-2b213.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:110282784517:android:2835ec6af494dbb6eec16c",
+        "android_client_info": {
+          "package_name": "com.mesrecettes"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "110282784517-0fsg62ph0779dqd5jai4e2vlb1kv123n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mesrecettes",
+            "certificate_hash": "6965545b5681173eea4a9e3125ad6ce8336a8965"
+          }
+        },
+        {
+          "client_id": "110282784517-pi6s5k3cm991m1d7elfpelc52tts34mu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYgOcyUkGQD3K57lnrZaY5KIK9cYfuUTY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "110282784517-pi6s5k3cm991m1d7elfpelc52tts34mu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

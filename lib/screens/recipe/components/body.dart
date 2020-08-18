@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mesrecettes/constants.dart';
 import 'package:mesrecettes/models/recipe.dart';
 import 'package:mesrecettes/screens/recipe/components/recipe_expansion_panel.dart';
 import 'package:mesrecettes/screens/recipe/components/recipe_informations.dart';
