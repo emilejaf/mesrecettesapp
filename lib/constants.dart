@@ -1,6 +1,7 @@
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:admob_consent/admob_consent.dart';
 
@@ -28,16 +29,32 @@ _initDatabase() async {
 
 final AdmobConsent _admobConsent = AdmobConsent();
 
-void showConsentForm() {
+bool _consent;
+
+void initConsent() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  _consent = prefs.getBool('consent') ?? null;
+  if (_consent == null) {
+    showConsentForm(initSDK: true);
+  }
+}
+
+void showConsentForm({bool initSDK = false}) {
   _admobConsent.show(
       publisherId: 'pub-8850562463084333',
       privacyURL: "https://mesrecettes.web.app/#privacypolicy");
-  _admobConsent.onConsentFormLoaded.listen((event) {
-    print(event);
+  _admobConsent.onConsentFormClosed.listen((bool status) async {
+    if (initSDK) {
+      FirebaseAdMob.instance
+          .initialize(appId: 'ca-app-pub-8850562463084333~3958573142');
+    }
+    _consent = status;
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool('consent', _consent);
   });
-  _admobConsent.onConsentFormClosed.listen((bool status) {
-    FirebaseAdMob.instance
-        .initialize(appId: 'ca-app-pub-8850562463084333~3958573142');
-    print(status);
-  });
+}
+
+MobileAdTargetingInfo getTargetingInfo() {
+  return MobileAdTargetingInfo(
+      nonPersonalizedAds: !_consent, childDirected: false);
 }

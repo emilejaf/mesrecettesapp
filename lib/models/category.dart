@@ -21,7 +21,7 @@ class Categories extends ChangeNotifier {
   }
 
   void addCategory(Category category) async {
-    items.add(category);
+    items.insert(0, category);
     notifyListeners();
 
     final Database db = await getDatabase();

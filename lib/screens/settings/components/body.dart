@@ -7,33 +7,75 @@ import 'package:mesrecettes/models/recipe.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
+import 'package:mesrecettes/constants.dart';
 
-class Body extends StatelessWidget {
+import 'package:firebase_remote_config/firebase_remote_config.dart';
+
+class Body extends StatefulWidget {
+  @override
+  _BodyState createState() => _BodyState();
+}
+
+class _BodyState extends State<Body> {
+  bool _showImportExport = false;
+
+  @override
+  void initState() {
+    super.initState();
+    initConfig();
+  }
+
+  void initConfig() async {
+    RemoteConfig remoteConfig = await RemoteConfig.instance;
+    await remoteConfig.setDefaults({'importexport': false});
+    await remoteConfig.fetch();
+    await remoteConfig.activateFetched();
+    bool data = remoteConfig.getBool('importexport');
+    setState(() {
+      _showImportExport = data;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: EdgeInsets.all(10),
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            RaisedButton(
-              child: Text(
-                'Importer les recettes',
-                style: TextStyle(color: Colors.white),
+        if (_showImportExport)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              RaisedButton(
+                child: Text(
+                  'Importer les recettes',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onPressed: () => importRecipe(context),
               ),
-              onPressed: () => importRecipe(context),
-            ),
-            RaisedButton(
-              child: Text(
-                'Exporter les recettes',
-                style: TextStyle(color: Colors.white),
-              ),
-              onPressed: () => exportRecipe(context),
-            )
-          ],
+              RaisedButton(
+                child: Text(
+                  'Exporter les recettes',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onPressed: () => exportRecipe(context),
+              )
+            ],
+          ),
+        Card(
+          child: ListTile(
+            title: Text('Modifer mon consentement'),
+            trailing: Icon(Icons.arrow_forward),
+            onTap: () => showConsentForm(),
+          ),
         ),
+        Card(
+          child: ListTile(
+            title: Text("Plus d'information"),
+            onTap: () => _showDialog(context),
+          ),
+        )
       ],
     );
   }
@@ -44,7 +86,6 @@ class Body extends StatelessWidget {
     String json = await dataFile.readAsString();
 
     final data = (jsonDecode(json));
-    //print(data['categories']);
 
     final Recipes recipes = Provider.of<Recipes>(context, listen: false);
 
@@ -110,5 +151,24 @@ class Body extends StatelessWidget {
     final File dataFile = File(join(path, 'data.json'));
 
     dataFile.writeAsString(data);
+  }
+
+  void _showDialog(BuildContext context) {
+    showAboutDialog(
+        context: context,
+        applicationIcon: Image.asset(
+          'assets/icons/app.png',
+          scale: 10,
+        ),
+        children: [
+          ListTile(
+            title: Text('Politique de confidentialité'),
+            onTap: () => launch('https://mesrecettes.web.app/#privacypolicy'),
+          ),
+          ListTile(
+            title: Text("Conditions d'utilisation"),
+            onTap: () => launch('https://mesrecettes.web.app/#termofuse'),
+          )
+        ]);
   }
 }

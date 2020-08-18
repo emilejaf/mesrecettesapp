@@ -49,7 +49,7 @@ class Recipes extends ChangeNotifier {
   }
 
   void addRecipe(Recipe recipe) async {
-    items.add(recipe);
+    items.insert(0, recipe);
     notifyListeners();
 
     final Database db = await getDatabase();

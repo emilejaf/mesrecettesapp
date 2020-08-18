@@ -12,14 +12,13 @@ import 'models/recipe.dart';
 FirebaseAnalytics analytics;
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-
   analytics = FirebaseAnalytics();
+  Crashlytics.instance.enableInDevMode = true;
   FlutterError.onError = Crashlytics.instance.recordFlutterError;
 
-  showConsentForm();
-
   runApp(MyApp());
+
+  initConsent();
 }
 
 class MyApp extends StatelessWidget {

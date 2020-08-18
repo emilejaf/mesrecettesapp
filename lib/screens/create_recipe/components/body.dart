@@ -10,6 +10,8 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:firebase_admob/firebase_admob.dart';
+import 'package:mesrecettes/constants.dart';
 
 import 'pages/page1.dart';
 import 'pages/page2.dart';
@@ -35,6 +37,9 @@ class Body extends StatefulWidget {
 }
 
 class _BodyState extends State<Body> {
+  final InterstitialAd _interstitialAd = InterstitialAd(
+      adUnitId: 'ca-app-pub-8850562463084333/2453919785',
+      targetingInfo: getTargetingInfo());
   // ignore: close_sinks
   final StreamController<List<Category>> selectedCategoriesController =
       StreamController();
@@ -65,6 +70,8 @@ class _BodyState extends State<Body> {
   @override
   void initState() {
     super.initState();
+
+    _interstitialAd.load();
 
     _controller.addListener(() {
       int next = _controller.page.round();
@@ -102,6 +109,7 @@ class _BodyState extends State<Body> {
   void dispose() {
     _controller.dispose();
     _streamSubscription.cancel();
+    _interstitialAd.dispose();
     super.dispose();
   }
 
@@ -118,6 +126,11 @@ class _BodyState extends State<Body> {
 
   void rightPress(bool isLast) async {
     if (isLast) {
+      //show ad
+      if (await _interstitialAd.isLoaded()) {
+        _interstitialAd.show();
+      }
+
       final String id = isEditing ? widget.edit.id : Uuid().v4();
       String path;
       // Save photo
