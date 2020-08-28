@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mesrecettes/components/my_drawer.dart';
 import 'package:mesrecettes/models/category.dart';
+import 'package:mesrecettes/models/user.dart';
+import 'package:mesrecettes/screens/account/login/login_screen.dart';
+import 'package:mesrecettes/screens/account/profile/profile_screen.dart';
 import 'package:mesrecettes/screens/create_recipe/create_recipe_screen.dart';
 import 'package:mesrecettes/screens/home/components/body.dart';
 import 'package:mesrecettes/screens/search/search_screen.dart';
@@ -24,6 +27,21 @@ class HomeScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(context,
                       MaterialPageRoute(builder: (context) => SearchScreen()));
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.account_circle),
+                onPressed: () {
+                  User user = Provider.of<User>(context, listen: false);
+                  if (user.isAuthenticated()) {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ProfileScreen()));
+                  } else {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => LoginScreen()));
+                  }
                 },
               )
             ],

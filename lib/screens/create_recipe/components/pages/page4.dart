@@ -17,6 +17,14 @@ class Page4 extends StatefulWidget {
 }
 
 class _Page4State extends State<Page4> {
+  ScrollController _scrollController;
+
+  @override
+  void initState() {
+    _scrollController = ScrollController();
+    super.initState();
+  }
+
   void notifyParent() {
     widget.callback(widget.listItem);
   }
@@ -36,8 +44,13 @@ class _Page4State extends State<Page4> {
   }
 
   void updateText(int index, String text) {
+    widget.listItem[index] = text;
+    notifyParent();
+  }
+
+  void updateListOrder(int oldIndex, int newIndex) {
     setState(() {
-      widget.listItem[index] = text;
+      widget.listItem.insert(newIndex, widget.listItem.removeAt(oldIndex));
     });
     notifyParent();
   }
@@ -47,32 +60,20 @@ class _Page4State extends State<Page4> {
     return Column(
       children: [
         Expanded(
-          child: ListView.builder(
-              itemCount: widget.listItem.length,
-              itemBuilder: (context, index) {
-                return Card(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: SizeConfig.defaultSize),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: MyTextInput(
-                              labelText: widget.labelText +
-                                  ' ' +
-                                  (index + 1).toString(),
-                              updateText: (String text) =>
-                                  updateText(index, text),
-                              text: widget.listItem[index]),
-                        ),
-                        InkWell(
-                            child: Icon(Icons.delete),
-                            onTap: () => remove(index)),
-                      ],
-                    ),
-                  ),
-                );
-              }),
+          child: ReorderableListView(
+              scrollController: _scrollController,
+              scrollDirection: Axis.vertical,
+              onReorder: (oldIndex, newIndex) {
+                if (newIndex > oldIndex) {
+                  newIndex -= 1;
+                }
+                updateListOrder(oldIndex, newIndex);
+              },
+              children: widget.listItem.asMap().entries.map((entry) {
+                int index = entry.key;
+                String text = entry.value;
+                return buildItem(index, text);
+              }).toList()),
         ),
         FlatButton(
           color: Theme.of(context).accentColor,
@@ -80,6 +81,26 @@ class _Page4State extends State<Page4> {
           onPressed: addItem,
         )
       ],
+    );
+  }
+
+  Widget buildItem(int index, String text) {
+    return Card(
+      key: Key(index.toString() + widget.labelText),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: SizeConfig.defaultSize),
+        child: Row(
+          children: [
+            Expanded(
+              child: MyTextInput(
+                  labelText: widget.labelText + ' ' + (index + 1).toString(),
+                  updateText: (String text) => updateText(index, text),
+                  text: text),
+            ),
+            InkWell(child: Icon(Icons.delete), onTap: () => remove(index)),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -22,8 +22,11 @@ _initDatabase() async {
   return openDatabase(join(await getDatabasesPath(), 'mesrecettes.db'),
       onCreate: (db, version) async {
     await db.execute(
-        'CREATE TABLE recipes(id TEXT PRIMARY KEY, name TEXT, cookTime TEXT, hasImage INTEGER, prepTime TEXT, people TEXT, ingredients TEXT, steps TEXT, notes TEXT)');
-    return db.execute('CREATE TABLE categories(name TEXT, recipeIds TEXT)');
+        'CREATE TABLE recipes(id TEXT PRIMARY KEY, name TEXT, cookTime TEXT, hasImage INTEGER, sync INTEGER, prepTime TEXT, people TEXT, ingredients TEXT, steps TEXT, notes TEXT)');
+    await db.execute('CREATE TABLE deletedRecipes(id TEXT PRIMARY KEY)');
+    await db.execute('CREATE TABLE deletedCategories(id TEXT PRIMARY KEY)');
+    return db.execute(
+        'CREATE TABLE categories(id TEXT PRIMARY KEY, name TEXT, sync INTEGER, recipeIds TEXT)');
   }, version: 1);
 }
 
@@ -56,5 +59,7 @@ void showConsentForm({bool initSDK = false}) {
 
 MobileAdTargetingInfo getTargetingInfo() {
   return MobileAdTargetingInfo(
-      nonPersonalizedAds: !_consent, childDirected: false);
+      nonPersonalizedAds: !_consent,
+      childDirected: false,
+      testDevices: ['DE4000BBEFBE907EB50B17AB2B9C6A33']);
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mesrecettes/components/my_drawer.dart';
 import 'package:mesrecettes/models/category.dart';
 import 'package:mesrecettes/screens/categories/components/body.dart';
+import 'package:uuid/uuid.dart';
 import 'package:provider/provider.dart';
 
 class CategoriesScreen extends StatelessWidget {
@@ -68,10 +69,13 @@ class CategoriesScreen extends StatelessWidget {
                 Categories categories =
                     Provider.of<Categories>(context, listen: false);
                 if (edit != null) {
-                  categories.editName(edit, _controller.text);
+                  String oldId = edit.id;
+                  edit.name = _controller.text;
+                  edit.id = Uuid().v4();
+                  categories.editCategory(oldId, edit);
                 } else {
-                  Category category =
-                      new Category(name: _controller.text, recipeIds: []);
+                  Category category = new Category(
+                      name: _controller.text, recipeIds: [], id: Uuid().v4());
                   categories.addCategory(category);
                 }
                 Navigator.pop(context);

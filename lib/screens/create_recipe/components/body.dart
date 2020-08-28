@@ -131,22 +131,20 @@ class _BodyState extends State<Body> {
         _interstitialAd.show();
       }
 
-      final String id = isEditing ? widget.edit.id : Uuid().v4();
+      final String id = Uuid().v4();
       String path;
       // Save photo
       if (image != null) {
         final String appPath = (await getApplicationDocumentsDirectory()).path;
         path = join(appPath, '$id.jpg');
-        if (widget.edit != null &&
-            widget.edit.hasImage &&
-            widget.edit.path != image.path) {
-          // delete phto
-          await File(path).delete();
-        }
         // save photo
-        if (image.path != path) {
-          imageCache.clear();
-          image.copy(path);
+        imageCache.clear();
+        image.copy(path);
+
+        if (widget.edit != null && widget.edit.hasImage) {
+          // delete phto
+          String oldPath = join(appPath, widget.edit.id + '.jpg');
+          await File(oldPath).delete();
         }
       }
       // Add recipe
@@ -162,25 +160,30 @@ class _BodyState extends State<Body> {
               ingredients.where((ingredient) => ingredient != '').toList(),
           steps: steps.where((step) => step != '').toList(),
           notes: notes);
-
-      Recipes recipes = Provider.of<Recipes>(this.context, listen: false);
-
-      if (isEditing) {
-        recipes.editRecipe(recipe);
-      } else {
-        recipes.addRecipe(recipe);
-      }
       // Add recipe to selected categories
       Categories categories =
           Provider.of<Categories>(this.context, listen: false);
 
+      if (isEditing && widget.defaultSelectedCategories.isNotEmpty) {
+        await categories.removeRecipeId(widget.edit.id);
+      }
+
+      if (selectedCategories.isNotEmpty) {
+        await categories.addRecipeId(selectedCategories, id);
+      }
+
+      Recipes recipes = Provider.of<Recipes>(this.context, listen: false);
+
       if (isEditing) {
-        if (widget.defaultSelectedCategories != selectedCategories) {
-          await categories.removeRecipeId(id);
-          categories.addRecipeId(selectedCategories, id);
-        }
+        recipes.editRecipe(widget.edit.id, recipe,
+            categories: categories.serverCategories != null
+                ? categories.serverCategories.toList()
+                : null);
       } else {
-        categories.addRecipeId(selectedCategories, id);
+        recipes.addRecipe(recipe,
+            categories: categories.serverCategories != null
+                ? categories.serverCategories.toList()
+                : null);
       }
 
       Navigator.pop(this.context);

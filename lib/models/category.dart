@@ -1,23 +1,43 @@
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:mesrecettes/constants.dart';
+import 'package:mesrecettes/helpers/firestore_helper.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:uuid/uuid.dart';
 
 class Category {
+  String id;
   String name;
+  bool sync;
   List<String> recipeIds;
 
-  Category({this.name, this.recipeIds});
+  Category({this.name, this.recipeIds, this.id, this.sync = false});
 
-  Map<String, dynamic> toMap() {
-    return {'name': name, 'recipeIds': jsonEncode(recipeIds)};
+  Map<String, dynamic> toMap({sqlFormat = true}) {
+    final Map<String, dynamic> map = {
+      'id': id,
+      'name': name,
+      'recipeIds': sqlFormat ? jsonEncode(recipeIds) : recipeIds
+    };
+    if (sqlFormat) {
+      map['sync'] = sync ? 1 : 0;
+    }
+    return map;
   }
 }
 
 class Categories extends ChangeNotifier {
-  Categories() {
-    init();
+  FirebaseUser _user;
+  Set<Map<String, dynamic>> serverCategories;
+
+  Categories({Stream categoriesStream, Stream userStream}) {
+    _init(categoriesStream);
+
+    userStream.listen((event) {
+      _user = event;
+    });
   }
 
   void addCategory(Category category) async {
@@ -27,15 +47,41 @@ class Categories extends ChangeNotifier {
     final Database db = await getDatabase();
     db.insert('categories', category.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
+
+    // category will be unsync
+
+    // we try to sync the category
+    if (_canUpdate()) {
+      _syncCategory(db, category);
+      // notifyListeners();
+    }
   }
 
-  void editName(Category category, String name) async {
-    final String oldName = category.name;
-    category.name = name;
-    notifyListeners();
+  void editCategory(String oldCategoryId, Category newCategory) async {
+    deletedCategories.add(oldCategoryId);
 
     final Database db = await getDatabase();
-    _update(db, oldName, category);
+    Batch batch = db.batch();
+    batch.update('categories', newCategory.toMap(),
+        where: 'id = ?', whereArgs: [oldCategoryId]);
+    batch.insert('deletedCategories', {'id': oldCategoryId});
+    batch.commit(noResult: true);
+
+    if (_canUpdate()) {
+      serverCategories.removeWhere((map) => map['id'] == oldCategoryId);
+      serverCategories.add(newCategory.toMap(sqlFormat: false));
+      bool result = await fireStoreHelper.updateCategories(
+          _user.uid, serverCategories.toList());
+      if (result) {
+        newCategory.sync = true;
+        Batch resultBatch = db.batch();
+        resultBatch.update('categories', newCategory.toMap(),
+            where: 'id = ?', whereArgs: [newCategory.id]);
+        resultBatch.delete('deletedCategories',
+            where: 'id = ?', whereArgs: [oldCategoryId]);
+        resultBatch.commit(noResult: true);
+      }
+    }
   }
 
   List<Category> getCategoriesByRecipeId(String id) {
@@ -44,56 +90,177 @@ class Categories extends ChangeNotifier {
         .toList();
   }
 
-  void addRecipeId(List<Category> categories, String id) async {
+  Future<void> addRecipeId(List<Category> categories, String id) async {
+    final Database db = await getDatabase();
     items
         .where((category) => categories.contains(category))
         .forEach((category) {
+      String oldId = category.id;
       category.recipeIds.add(id);
-    });
-    notifyListeners();
+      category.id = Uuid().v4();
 
-    final Database db = await getDatabase();
-
-    categories.forEach((category) {
-      _update(db, category.name, category);
-    });
-  }
-
-  Future<void> removeRecipeId(String id) async {
-    final Database db = await getDatabase();
-    items.forEach((Category category) {
-      if (category.recipeIds.contains(id)) {
-        category.recipeIds.remove(id);
-        _update(db, category.name, category);
+      _updateCategoryState(db, category, oldId);
+      if (_canUpdate()) {
+        serverCategories.removeWhere((map) => map['id'] == oldId);
+        serverCategories.add(category.toMap(sqlFormat: false));
       }
     });
-  }
-
-  void removeCategory(String name) async {
-    items.removeWhere((element) => element.name == name);
     notifyListeners();
-
-    final Database db = await getDatabase();
-    db.delete('categories', where: 'name = ?', whereArgs: [name]);
   }
 
-  void init() async {
+  Future<void> removeRecipeId(String recipeId) async {
+    final Database db = await getDatabase();
+    items.forEach((Category category) {
+      if (category.recipeIds.contains(recipeId)) {
+        // we have to create a new category
+        String oldId = category.id;
+        category.recipeIds.remove(recipeId);
+        category.id = Uuid().v4(); // generate new id
+        _updateCategoryState(db, category, oldId);
+        if (_canUpdate()) {
+          serverCategories.removeWhere((map) => map['id'] == oldId);
+          serverCategories.add(category.toMap(sqlFormat: false));
+        }
+      }
+    });
+    notifyListeners();
+  }
+
+  void deleteCategory(String id) async {
+    items.removeWhere((element) => element.id == id);
+    notifyListeners();
+    deletedCategories.add(id);
+    final Database db = await getDatabase();
+    Batch batch = db.batch();
+    batch.delete('categories', where: 'id = ?', whereArgs: [id]);
+    batch.insert('deletedCategories', {'id': id});
+    batch.commit(noResult: true);
+
+    if (_canUpdate()) {
+      _deleteCategoryFromFirestore(db, id);
+    }
+  }
+
+  Future<void> _syncCategory(Database db, Category category) async {
+    serverCategories.add(category.toMap(sqlFormat: false));
+    bool result = await fireStoreHelper.updateCategories(
+        _user.uid, serverCategories.toList());
+    if (result) {
+      category.sync = true;
+      _updateCategoryState(db, category, category.id);
+    }
+  }
+
+  Future<void> _deleteCategoryFromFirestore(
+      Database db, String categoryId) async {
+    serverCategories.removeWhere((map) => map['id'] == categoryId);
+    bool result = await FireStoreHelper()
+        .updateCategories(_user.uid, serverCategories.toList());
+    if (result) {
+      deletedCategories.remove(categoryId);
+      db.delete('deletedCategories', where: 'id = ?', whereArgs: [categoryId]);
+    }
+  }
+
+  bool _canUpdate() {
+    return _user != null && serverCategories != null;
+  }
+
+  void _init(Stream categoriesStream) async {
     final Database db = await getDatabase();
 
     final List<Map<String, dynamic>> maps = await db.query('categories');
 
-    items = List.generate(
-        maps.length,
-        (index) => Category(
-            name: maps[index]['name'],
-            recipeIds: jsonDecode(maps[index]['recipeIds']).cast<String>()));
+    items = List.generate(maps.length, (index) => _fromMap(maps[index]));
     notifyListeners();
+
+    final List<Map<String, dynamic>> deletedCategoriesMaps =
+        await db.query('deletedCategories');
+
+    deletedCategories = List.generate(deletedCategoriesMaps.length,
+        (index) => deletedCategoriesMaps[index]['id']);
+
+    categoriesStream.listen((event) {
+      // categories list from firestore
+      if (event != null) {
+        serverCategories = event.toSet();
+
+        if (items.isNotEmpty) {
+          // we may have categories to upload or to delete
+          items
+              .where((Category category) => !category.sync)
+              .forEach((Category category) {
+            // recipe to sync
+            _syncCategory(db, category);
+          });
+
+          // check for categories to delete locally
+          final Set<String> serverCategoiesId =
+              serverCategories.map((e) => e['id']).cast<String>().toSet();
+
+          final Set<String> firestoreDeletedCategoriesIds = items
+              .where((Category category) =>
+                  category.sync && !serverCategoiesId.contains(category.id))
+              .map((Category category) => category.id)
+              .toSet();
+
+          items.removeWhere((Category category) =>
+              firestoreDeletedCategoriesIds.contains(category.id));
+          notifyListeners();
+
+          if (firestoreDeletedCategoriesIds.isNotEmpty) {
+            Batch batch = db.batch();
+
+            firestoreDeletedCategoriesIds.forEach((String id) {
+              batch.delete('categories', where: 'id = ?', whereArgs: [id]);
+            });
+
+            batch.commit(noResult: true);
+          }
+        }
+
+        // check for recipe to delete from firestore
+        deletedCategories.forEach((String categoryId) {
+          // delete category to firestore
+          _deleteCategoryFromFirestore(db, categoryId);
+        });
+
+        //check for category to download
+        if (serverCategories.isNotEmpty) {
+          Set<String> localCategoryId =
+              items.map((Category category) => category.id).toSet();
+
+          serverCategories
+              .where((map) => !localCategoryId.contains(map['id']))
+              .forEach((map) {
+            Category category = _fromMap(map, sqlFormat: false);
+            items.insert(0, category);
+            notifyListeners();
+
+            db.insert('categories', category.toMap(),
+                conflictAlgorithm: ConflictAlgorithm.replace);
+          });
+        }
+      }
+    });
   }
 
   List<Category> items = [];
+  List<String> deletedCategories = [];
 
-  void _update(Database db, String key, Category category) {
-    db.update('categories', category.toMap(),
-        where: 'name = ?', whereArgs: [key]);
+  Future<void> _updateCategoryState(
+      Database db, Category category, String categoryId) async {
+    await db.update('categories', category.toMap(),
+        where: 'id = ?', whereArgs: [categoryId]);
   }
+}
+
+Category _fromMap(Map<String, dynamic> data, {bool sqlFormat = true}) {
+  return Category(
+      id: data['id'],
+      name: data['name'],
+      sync: sqlFormat ? data['sync'] == 1 ? true : false : true,
+      recipeIds: sqlFormat
+          ? jsonDecode(data['recipeIds']).cast<String>()
+          : data['recipeIds'].cast<String>());
 }

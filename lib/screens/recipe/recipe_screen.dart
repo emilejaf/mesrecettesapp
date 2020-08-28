@@ -10,9 +10,13 @@ class RecipeScreen extends StatelessWidget {
 
   const RecipeScreen({Key key, this.recipe}) : super(key: key);
 
-  void removeRecipe(BuildContext context, Recipe recipe) {
-    Provider.of<Categories>(context, listen: false).removeRecipeId(recipe.id);
-    Provider.of<Recipes>(context, listen: false).removeRecipe(recipe);
+  void removeRecipe(BuildContext context, Recipe recipe) async {
+    Categories categories = Provider.of<Categories>(context, listen: false);
+    await categories.removeRecipeId(recipe.id);
+    Provider.of<Recipes>(context, listen: false).deleteRecipe(recipe,
+        categories: categories.serverCategories != null
+            ? categories.serverCategories.toList()
+            : null);
     Navigator.pop(context);
     Navigator.pop(context);
   }

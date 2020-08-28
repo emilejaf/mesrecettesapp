@@ -15,26 +15,25 @@ class Body extends StatelessWidget {
       if (categories.items.length > 0) {
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: defaultSize * 0.6),
-          child: GridView.builder(
-            itemCount: categories.items.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount:
-                    SizeConfig.orientation == Orientation.landscape ? 2 : 1,
-                mainAxisSpacing: SizeConfig.defaultSize * 0.3,
-                crossAxisSpacing:
-                    SizeConfig.orientation == Orientation.landscape
-                        ? SizeConfig.defaultSize * 2
-                        : 0,
-                childAspectRatio: 5.75),
-            itemBuilder: (context, index) {
-              Category category = categories.items[index];
-              return Center(
-                  child: buildCategoryCard(
-                      title: category.name,
-                      deleteCategory: () =>
-                          {categories.removeCategory(category.name)},
-                      editCategory: () => editCategory(category)));
-            },
+          child: OrientationBuilder(
+            builder: (context, orientation) => GridView.builder(
+              itemCount: categories.items.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: orientation == Orientation.landscape ? 2 : 1,
+                  mainAxisSpacing: SizeConfig.defaultSize * 0.3,
+                  childAspectRatio: 5,
+                  crossAxisSpacing: orientation == Orientation.landscape
+                      ? SizeConfig.defaultSize * 2
+                      : 0),
+              itemBuilder: (context, index) {
+                Category category = categories.items[index];
+                return buildCategoryCard(
+                    title: category.name,
+                    deleteCategory: () =>
+                        {categories.deleteCategory(category.id)},
+                    editCategory: () => editCategory(category));
+              },
+            ),
           ),
         );
       } else {
@@ -43,30 +42,32 @@ class Body extends StatelessWidget {
     });
   }
 
-  Card buildCategoryCard(
+  Widget buildCategoryCard(
       {String title, Function deleteCategory, Function editCategory}) {
     double defaultSize = SizeConfig.defaultSize;
-    return Card(
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(defaultSize * 0.4)),
-      child: ListTile(
-        title: Text(title),
-        trailing: Wrap(
-          children: [
-            InkWell(
-              child: Padding(
-                padding: EdgeInsets.all(defaultSize * 0.5),
-                child: Icon(Icons.edit),
-              ),
-              onTap: editCategory,
-            ),
-            InkWell(
+    return Center(
+      child: Card(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(defaultSize * 0.4)),
+        child: ListTile(
+          title: Text(title),
+          trailing: Wrap(
+            children: [
+              InkWell(
                 child: Padding(
                   padding: EdgeInsets.all(defaultSize * 0.5),
-                  child: Icon(Icons.delete),
+                  child: Icon(Icons.edit),
                 ),
-                onTap: deleteCategory)
-          ],
+                onTap: editCategory,
+              ),
+              InkWell(
+                  child: Padding(
+                    padding: EdgeInsets.all(defaultSize * 0.5),
+                    child: Icon(Icons.delete),
+                  ),
+                  onTap: deleteCategory)
+            ],
+          ),
         ),
       ),
     );

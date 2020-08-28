@@ -2,6 +2,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:mesrecettes/models/category.dart';
 import 'package:mesrecettes/models/nav_item.dart';
+import 'package:mesrecettes/models/user.dart';
 import 'package:mesrecettes/screens/home/home_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -31,11 +32,19 @@ class MyApp extends StatelessWidget {
           create: (context) => NavItems(),
         ),
         ChangeNotifierProvider(
-          create: (context) => Recipes(),
+          lazy: false,
+          create: (context) => User(),
         ),
-        ChangeNotifierProvider(
-          create: (context) => Categories(),
-        )
+        ChangeNotifierProxyProvider<User, Recipes>(
+            create: null,
+            update: (context, user, previous) => Recipes(
+                recipeIdsStream: user.recipeIdsStream,
+                userStream: user.userStream)),
+        ChangeNotifierProxyProvider<User, Categories>(
+            create: null,
+            update: (context, user, previous) => Categories(
+                categoriesStream: user.categoriesStream,
+                userStream: user.userStream)),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
