@@ -41,6 +41,7 @@ dependencies:
   firebase_analytics: 5.0.16
   firebase_crashlytics: 0.1.4+1
   firebase_auth:
+  firebase_storage:
   cloud_firestore:
   google_sign_in: "^4.5.1"
   admob_consent: 1.0.0+1

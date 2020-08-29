@@ -174,16 +174,25 @@ class _BodyState extends State<Body> {
 
       Recipes recipes = Provider.of<Recipes>(this.context, listen: false);
 
+      void syncCallback() {
+        if (selectedCategories.isNotEmpty) {
+          categories.syncCategories(selectedCategories);
+        }
+      }
+
       if (isEditing) {
-        recipes.editRecipe(widget.edit.id, recipe,
+        recipes.editRecipe(
+            widget.edit.id, widget.edit.sync, widget.edit.hasImage, recipe,
             categories: categories.serverCategories != null
                 ? categories.serverCategories.toList()
-                : null);
+                : null,
+            callback: syncCallback);
       } else {
         recipes.addRecipe(recipe,
             categories: categories.serverCategories != null
                 ? categories.serverCategories.toList()
-                : null);
+                : null,
+            callback: syncCallback);
       }
 
       Navigator.pop(this.context);

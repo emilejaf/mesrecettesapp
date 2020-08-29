@@ -16,7 +16,8 @@ class RecipeScreen extends StatelessWidget {
     Provider.of<Recipes>(context, listen: false).deleteRecipe(recipe,
         categories: categories.serverCategories != null
             ? categories.serverCategories.toList()
-            : null);
+            : null,
+        callback: () => {categories.syncCategories(categories.items)});
     Navigator.pop(context);
     Navigator.pop(context);
   }

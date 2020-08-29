@@ -96,7 +96,11 @@ class Categories extends ChangeNotifier {
         .where((category) => categories.contains(category))
         .forEach((category) {
       String oldId = category.id;
+      if (category.sync) {
+        db.insert('deletedCategories', {'id': oldId});
+      }
       category.recipeIds.add(id);
+      category.sync = false;
       category.id = Uuid().v4();
 
       _updateCategoryState(db, category, oldId);
@@ -114,7 +118,12 @@ class Categories extends ChangeNotifier {
       if (category.recipeIds.contains(recipeId)) {
         // we have to create a new category
         String oldId = category.id;
+        if (category.sync) {
+          // add oldCategory to deletedCategories
+          db.insert('deletedCategories', {'id': oldId});
+        }
         category.recipeIds.remove(recipeId);
+        category.sync = false;
         category.id = Uuid().v4(); // generate new id
         _updateCategoryState(db, category, oldId);
         if (_canUpdate()) {
@@ -126,19 +135,45 @@ class Categories extends ChangeNotifier {
     notifyListeners();
   }
 
-  void deleteCategory(String id) async {
+  void deleteCategory(String id, bool sync) async {
     items.removeWhere((element) => element.id == id);
     notifyListeners();
     deletedCategories.add(id);
     final Database db = await getDatabase();
     Batch batch = db.batch();
     batch.delete('categories', where: 'id = ?', whereArgs: [id]);
-    batch.insert('deletedCategories', {'id': id});
+    if (sync) {
+      batch.insert('deletedCategories', {'id': id});
+    }
     batch.commit(noResult: true);
 
-    if (_canUpdate()) {
+    if (_canUpdate() && sync) {
       _deleteCategoryFromFirestore(db, id);
     }
+  }
+
+  Future<void> syncCategories(List<Category> categories) async {
+    final Database db = await getDatabase();
+
+    Batch batch = db.batch();
+
+    categories.forEach((Category category) {
+      category.sync = true;
+      batch.update('categories', category.toMap(),
+          where: 'id = ?', whereArgs: [category.id]);
+    });
+
+    batch.commit(noResult: true);
+  }
+
+  void unsyncAllCategories() async {
+    items.forEach((Category category) {
+      category.sync = false;
+    });
+
+    final Database db = await getDatabase();
+    db.rawUpdate('UPDATE categories SET sync=0');
+    db.delete('deletedCategories');
   }
 
   Future<void> _syncCategory(Database db, Category category) async {
@@ -187,8 +222,11 @@ class Categories extends ChangeNotifier {
 
         if (items.isNotEmpty) {
           // we may have categories to upload or to delete
+          Set<String> serverCategoriesIds =
+              serverCategories.map((map) => map['id']).cast<String>().toSet();
           items
-              .where((Category category) => !category.sync)
+              .where((Category category) =>
+                  !category.sync && !serverCategoriesIds.contains(category.id))
               .forEach((Category category) {
             // recipe to sync
             _syncCategory(db, category);

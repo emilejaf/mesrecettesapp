@@ -23,7 +23,8 @@ _initDatabase() async {
       onCreate: (db, version) async {
     await db.execute(
         'CREATE TABLE recipes(id TEXT PRIMARY KEY, name TEXT, cookTime TEXT, hasImage INTEGER, sync INTEGER, prepTime TEXT, people TEXT, ingredients TEXT, steps TEXT, notes TEXT)');
-    await db.execute('CREATE TABLE deletedRecipes(id TEXT PRIMARY KEY)');
+    await db.execute(
+        'CREATE TABLE deletedRecipes(id TEXT PRIMARY KEY, hasImage INTEGER)');
     await db.execute('CREATE TABLE deletedCategories(id TEXT PRIMARY KEY)');
     return db.execute(
         'CREATE TABLE categories(id TEXT PRIMARY KEY, name TEXT, sync INTEGER, recipeIds TEXT)');

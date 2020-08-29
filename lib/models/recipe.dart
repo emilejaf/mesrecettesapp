@@ -65,7 +65,8 @@ class Recipes extends ChangeNotifier {
     });
   }
 
-  void addRecipe(Recipe recipe, {List<Map<String, dynamic>> categories}) async {
+  void addRecipe(Recipe recipe,
+      {List<Map<String, dynamic>> categories, Function callback}) async {
     items.insert(0, recipe);
     notifyListeners();
 
@@ -77,13 +78,14 @@ class Recipes extends ChangeNotifier {
 
     // we try to sync the recipe
     if (_canUpdate()) {
-      _syncRecipe(db, recipe, categories: categories);
+      _syncRecipe(db, recipe, categories: categories, callback: callback);
       //notifyListeners();
     }
   }
 
-  void editRecipe(String oldRecipeId, Recipe newRecipe,
-      {List<Map<String, dynamic>> categories}) async {
+  void editRecipe(String oldRecipeId, bool oldRecipeSync, bool oldHasImage,
+      Recipe newRecipe,
+      {List<Map<String, dynamic>> categories, Function callback}) async {
     items.removeWhere((recipe) => recipe.id == oldRecipeId);
     items.add(newRecipe);
     notifyListeners();
@@ -93,29 +95,37 @@ class Recipes extends ChangeNotifier {
     Batch batch = db.batch();
     batch.update('recipes', newRecipe.toMap(),
         where: 'id = ?', whereArgs: [oldRecipeId]);
-    batch.insert('deletedRecipes', {'id': oldRecipeId});
+    if (oldRecipeSync) {
+      batch.insert('deletedRecipes',
+          {'id': oldRecipeId, 'hasImage': oldHasImage ? 1 : 0});
+    }
     batch.commit(noResult: true);
 
     if (_canUpdate()) {
       recipeIds.remove(oldRecipeId);
       recipeIds.add(newRecipe.id);
-      bool result = await fireStoreHelper.updateRecipe(
-          oldRecipeId, newRecipe, _user.uid, recipeIds.toList(),
+      bool result = await fireStoreHelper.updateRecipe(oldRecipeId,
+          oldRecipeSync, oldHasImage, newRecipe, _user.uid, recipeIds.toList(),
           categories: categories);
       if (result) {
         newRecipe.sync = true;
         Batch resultBatch = db.batch();
         resultBatch.update('recipes', newRecipe.toMap(),
             where: 'id = ?', whereArgs: [newRecipe.id]);
-        resultBatch.delete('deletedRecipes',
-            where: 'id = ?', whereArgs: [oldRecipeId]);
+        if (oldRecipeSync) {
+          resultBatch.delete('deletedRecipes',
+              where: 'id = ?', whereArgs: [oldRecipeId]);
+        }
         resultBatch.commit(noResult: true);
+        if (callback != null) {
+          callback();
+        }
       }
     }
   }
 
   void deleteRecipe(Recipe recipe,
-      {List<Map<String, dynamic>> categories}) async {
+      {List<Map<String, dynamic>> categories, Function callback}) async {
     items.removeWhere(
         (element) => element.id == recipe.id); // remove recipe from recipe list
     notifyListeners(); // update ui
@@ -123,15 +133,19 @@ class Recipes extends ChangeNotifier {
     final Database db = await getDatabase();
 
     Batch batch = db.batch();
-    batch.insert('deletedRecipes', {'id': recipe.id});
+    if (recipe.sync) {
+      batch.insert('deletedRecipes',
+          {'id': recipe.id, 'hasImage': recipe.hasImage ? 1 : 0});
+    }
     batch.delete('recipes', where: 'id = ?', whereArgs: [recipe.id]);
     batch.commit(noResult: true);
     if (recipe.hasImage) {
       File(recipe.path).delete();
     }
 
-    if (_canUpdate()) {
-      _deleteRecipeFromFirestore(db, recipe.id, categories: categories);
+    if (_canUpdate() && recipe.sync) {
+      _deleteRecipeFromFirestore(db, recipe.id, recipe.hasImage,
+          categories: categories, callback: callback);
     }
   }
 
@@ -142,6 +156,7 @@ class Recipes extends ChangeNotifier {
 
     final Database db = await getDatabase();
     db.rawUpdate('UPDATE recipes SET sync=0');
+    db.delete('deletedRecipes');
   }
 
   void _updateRecipeState(Database db, Recipe recipe) async {
@@ -154,7 +169,7 @@ class Recipes extends ChangeNotifier {
   }
 
   Future<void> _syncRecipe(Database db, Recipe recipe,
-      {List<Map<String, dynamic>> categories}) async {
+      {List<Map<String, dynamic>> categories, Function callback}) async {
     recipeIds.add(recipe.id);
     bool result = await fireStoreHelper.addRecipe(
         recipe, _user.uid, recipeIds.toList(),
@@ -162,18 +177,25 @@ class Recipes extends ChangeNotifier {
     if (result) {
       recipe.sync = true;
       _updateRecipeState(db, recipe);
+      if (callback != null) {
+        callback();
+      }
     }
   }
 
-  Future<void> _deleteRecipeFromFirestore(Database db, String recipeId,
-      {List<Map<String, dynamic>> categories}) async {
+  Future<void> _deleteRecipeFromFirestore(
+      Database db, String recipeId, bool hasImage,
+      {List<Map<String, dynamic>> categories, Function callback}) async {
     recipeIds.remove(recipeId);
     bool result = await fireStoreHelper.deleteRecipe(
-        recipeId, _user.uid, recipeIds.toList(),
+        recipeId, hasImage, _user.uid, recipeIds.toList(),
         categories: categories);
     if (result) {
       deletedRecipes.remove(recipeId);
       db.delete('deletedRecipes', where: 'id = ?', whereArgs: [recipeId]);
+      if (callback != null) {
+        callback();
+      }
     }
   }
 
@@ -200,7 +222,10 @@ class Recipes extends ChangeNotifier {
         recipeIds = event.cast<String>().toSet();
         if (items.isNotEmpty) {
           // we may recipe to delete or to upload
-          items.where((Recipe recipe) => !recipe.sync).forEach((Recipe recipe) {
+          items
+              .where((Recipe recipe) =>
+                  !recipe.sync && !recipeIds.contains(recipe.id))
+              .forEach((Recipe recipe) {
             // recipe to sync
             // recipe have to be added to firestore
             _syncRecipe(db, recipe);
@@ -229,7 +254,9 @@ class Recipes extends ChangeNotifier {
 
         deletedRecipes.forEach((String recipeId) {
           // recipe to delete from firestore
-          _deleteRecipeFromFirestore(db, recipeId);
+          final bool hasImage = deletedRecipesMaps
+              .firstWhere((element) => element['id'] == recipeId)['hasImage'];
+          _deleteRecipeFromFirestore(db, recipeId, hasImage);
           // recipeIds.remove(recipeId); // update with new value
         });
         // check for recipe to download
@@ -241,9 +268,15 @@ class Recipes extends ChangeNotifier {
               .where((id) => !localRecipeIds.contains(id))
               .forEach((String recipeId) {
             // recipe id of the recipe to download
-            fireStoreHelper.getRecipe(recipeId).then((recipeMap) {
+            fireStoreHelper.getRecipe(recipeId).then((recipeMap) async {
               Recipe recipe =
                   _fromMap(recipeMap, sqlFormat: false, appPath: appPath);
+
+              if (recipe.hasImage) {
+                // we have to download image
+                await fireStoreHelper.downloadFile(
+                    recipe.id + '.jpg', recipe.path);
+              }
               items.insert(0, recipe);
               notifyListeners();
               db.insert('recipes', recipe.toMap(),

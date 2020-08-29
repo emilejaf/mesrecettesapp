@@ -30,7 +30,7 @@ class Body extends StatelessWidget {
                 return buildCategoryCard(
                     title: category.name,
                     deleteCategory: () =>
-                        {categories.deleteCategory(category.id)},
+                        {categories.deleteCategory(category.id, category.sync)},
                     editCategory: () => editCategory(category));
               },
             ),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mesrecettes/models/category.dart';
+import 'package:mesrecettes/models/recipe.dart';
 import 'package:mesrecettes/models/user.dart';
 import 'package:provider/provider.dart';
 
@@ -14,14 +16,7 @@ class Body extends StatelessWidget {
                 flex: 1,
                 child: Container(
                   width: double.infinity,
-                  decoration: BoxDecoration(
-                      color: Color(0xFFd7ffd9),
-                      boxShadow: [
-                        BoxShadow(
-                            blurRadius: 2,
-                            offset: Offset(0, 1),
-                            color: Colors.black87)
-                      ]),
+                  decoration: BoxDecoration(color: Colors.white),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
@@ -53,7 +48,7 @@ class Body extends StatelessWidget {
                 ),
               ),
               Expanded(
-                flex: 3,
+                flex: 4,
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 12, vertical: 18),
                   child: Column(
@@ -65,6 +60,10 @@ class Body extends StatelessWidget {
                             onTap: () {
                               Navigator.pop(context);
                               user.signOut();
+                              Provider.of<Recipes>(context, listen: false)
+                                  .unsyncAllRecipes();
+                              Provider.of<Categories>(context, listen: false)
+                                  .unsyncAllCategories();
                             }),
                       )
                     ],

@@ -5,9 +5,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Color(0xFFd7ffd9),
-      ),
+      appBar: AppBar(),
       body: Body(),
     );
   }
