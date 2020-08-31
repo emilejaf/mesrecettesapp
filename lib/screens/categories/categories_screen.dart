@@ -13,6 +13,7 @@ class CategoriesScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(centerTitle: true, title: Text('Mes Catégories')),
       drawer: MyDrawer(),
+      resizeToAvoidBottomInset: false,
       body: Body(
         editCategory: (Category category) {
           _showCreateDialog(context, edit: category);

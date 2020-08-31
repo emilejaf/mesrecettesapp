@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mesrecettes/screens/create_recipe/components/my_text_input.dart';
-import 'package:mesrecettes/size_config.dart';
 
 class Page4 extends StatefulWidget {
   final String buttonText;
@@ -85,22 +84,12 @@ class _Page4State extends State<Page4> {
   }
 
   Widget buildItem(int index, String text) {
-    return Card(
+    return MyTextInput(
       key: Key(index.toString() + widget.labelText),
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: SizeConfig.defaultSize),
-        child: Row(
-          children: [
-            Expanded(
-              child: MyTextInput(
-                  labelText: widget.labelText + ' ' + (index + 1).toString(),
-                  updateText: (String text) => updateText(index, text),
-                  text: text),
-            ),
-            InkWell(child: Icon(Icons.delete), onTap: () => remove(index)),
-          ],
-        ),
-      ),
+      labelText: widget.labelText + ' ' + (index + 1).toString(),
+      updateText: (String text) => updateText(index, text),
+      text: text,
+      onRemove: () => remove(index),
     );
   }
 }

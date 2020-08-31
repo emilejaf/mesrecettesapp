@@ -12,39 +12,38 @@ class Body extends StatelessWidget {
         return Center(
           child: Column(
             children: [
-              Expanded(
-                flex: 1,
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(color: Colors.white),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (user.user.photoUrl != null)
-                        CircleAvatar(
-                            backgroundImage: NetworkImage(user.user.photoUrl))
-                      else
-                        Icon(
-                          Icons.account_circle,
-                          color: Colors.black,
-                          size: 50,
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(color: Colors.white),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (user.user.photoUrl != null)
+                      CircleAvatar(
+                        backgroundImage: NetworkImage(user.user.photoUrl),
+                        radius: 50,
+                      )
+                    else
+                      Icon(
+                        Icons.account_circle,
+                        color: Colors.black,
+                        size: 50,
+                      ),
+                    if (user.user.displayName != null)
+                      Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text(
+                          user.user.displayName,
+                          style: TextStyle(fontSize: 18),
                         ),
-                      if (user.user.displayName != null)
-                        Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            user.user.displayName,
-                            style: TextStyle(fontSize: 18),
-                          ),
-                        ),
-                      if (user.user.email != null)
-                        Text(
-                          user.user.email,
-                          style: TextStyle(fontSize: 12),
-                        ),
-                    ],
-                  ),
+                      ),
+                    if (user.user.email != null)
+                      Text(
+                        user.user.email,
+                        style: TextStyle(fontSize: 12),
+                      ),
+                  ],
                 ),
               ),
               Expanded(

@@ -29,7 +29,11 @@ class FireStoreHelper {
 
     WriteBatch batch = _firestore.batch();
 
-    batch.setData(recipeRef, recipe.toMap(sqlFormat: false), merge: true);
+    final map = recipe.toMap(sqlFormat: false);
+
+    map['owner'] = uid;
+
+    batch.setData(recipeRef, map, merge: true);
 
     _updateUserData(batch, uid, recipeIds: recipeIds, categories: categories);
 
@@ -56,7 +60,12 @@ class FireStoreHelper {
         _deleteFile(oldRecipeId + '.jpg');
       }
     }
-    batch.setData(newRecipeRef, newRecipe.toMap(sqlFormat: false), merge: true);
+
+    final map = newRecipe.toMap(sqlFormat: false);
+
+    map['owner'] = uid;
+
+    batch.setData(newRecipeRef, map, merge: true);
     if (newRecipe.hasImage) {
       _uploadFile(File(newRecipe.path), newRecipe.id + '.jpg');
     }
