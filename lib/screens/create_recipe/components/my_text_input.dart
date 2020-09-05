@@ -37,6 +37,7 @@ class _MyTextInputState extends State<MyTextInput> {
           enabled: _isEnabled,
           focusNode: _focusNode,
           controller: _controller,
+          textCapitalization: TextCapitalization.sentences,
           onChanged: widget.updateText,
           decoration: InputDecoration(
             alignLabelWithHint: true,

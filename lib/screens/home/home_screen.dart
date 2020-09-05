@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mesrecettes/components/my_drawer.dart';
+import 'package:mesrecettes/helpers/dynamic_link_helper.dart';
 import 'package:mesrecettes/models/category.dart';
 import 'package:mesrecettes/models/user.dart';
 import 'package:mesrecettes/screens/account/login/login_screen.dart';
@@ -14,6 +15,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     SizeConfig().init(context);
+    dynamicLinkHelper.handleDynamicLinks(context);
     return Consumer<Categories>(
       builder: (context, categories, child) => DefaultTabController(
         length: categories.items.length + 1,

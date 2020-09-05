@@ -55,6 +55,7 @@ class _Page1State extends State<Page1> {
           TextField(
             controller: _nameController,
             autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
             onChanged: widget.callbackRecipeName,
             decoration: InputDecoration(labelText: ('Nom de recette')),
           ),

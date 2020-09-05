@@ -142,8 +142,12 @@ class FireStoreHelper {
     _storage.ref().child(fileName).delete();
   }
 
+  Future<String> getFilePath(String fileName) async {
+    return await _storage.ref().child(fileName).getDownloadURL();
+  }
+
   Future<void> downloadFile(String fileName, String newFilePath) async {
-    final String url = await _storage.ref().child(fileName).getDownloadURL();
+    final String url = await getFilePath(fileName);
 
     final http.Response downloadedData = await http.get(url);
     final File file = File(newFilePath);

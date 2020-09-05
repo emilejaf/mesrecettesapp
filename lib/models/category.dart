@@ -206,7 +206,8 @@ class Categories extends ChangeNotifier {
 
     final List<Map<String, dynamic>> maps = await db.query('categories');
 
-    items = List.generate(maps.length, (index) => _fromMap(maps[index]));
+    items =
+        List.generate(maps.length, (index) => _fromMap(maps[index])).reversed;
     notifyListeners();
 
     final List<Map<String, dynamic>> deletedCategoriesMaps =

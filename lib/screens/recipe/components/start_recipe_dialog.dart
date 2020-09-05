@@ -86,11 +86,13 @@ class _StartRecipeDialogState extends State<StartRecipeDialog> {
                               style: TextStyle(fontSize: defaultSize * 2.4),
                             ),
                           )),
-                          Center(
+                          Container(
+                              padding: EdgeInsets.all(16),
+                              alignment: Alignment.center,
                               child: Text(
-                            widget.steps[index],
-                            style: TextStyle(fontSize: defaultSize * 1.2),
-                          )),
+                                widget.steps[index],
+                                style: TextStyle(fontSize: defaultSize * 1.2),
+                              )),
                         ]),
                       ),
                     );

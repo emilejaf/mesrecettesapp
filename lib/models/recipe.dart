@@ -15,6 +15,7 @@ class Recipe {
   String path;
   bool hasImage;
   bool sync;
+  bool public;
   List<String> ingredients;
   List<String> steps;
   String notes;
@@ -24,6 +25,7 @@ class Recipe {
       {this.name = '',
       this.path = '',
       this.hasImage = false,
+      this.public = false,
       this.sync = false,
       this.ingredients,
       this.steps,
@@ -38,6 +40,7 @@ class Recipe {
       'id': id,
       'name': name,
       'hasImage': sqlFormat ? hasImage ? 1 : 0 : hasImage,
+      'public': sqlFormat ? public ? 1 : 0 : public,
       'cookTime': cookTime,
       'prepTime': prepTime,
       'people': people,
@@ -206,8 +209,8 @@ class Recipes extends ChangeNotifier {
     final String appPath = (await getApplicationDocumentsDirectory()).path;
 
     items = List.generate(maps.length, (index) {
-      return _fromMap(maps[index], appPath: appPath);
-    });
+      return fromMap(maps[index], appPath: appPath);
+    }).reversed;
     notifyListeners();
 
     final List<Map<String, dynamic>> deletedRecipesMaps =
@@ -270,7 +273,7 @@ class Recipes extends ChangeNotifier {
             // recipe id of the recipe to download
             fireStoreHelper.getRecipe(recipeId).then((recipeMap) async {
               Recipe recipe =
-                  _fromMap(recipeMap, sqlFormat: false, appPath: appPath);
+                  fromMap(recipeMap, sqlFormat: false, appPath: appPath);
 
               if (recipe.hasImage) {
                 // we have to download image
@@ -290,28 +293,29 @@ class Recipes extends ChangeNotifier {
 
   List<Recipe> items = [];
   List<String> deletedRecipes = [];
+}
 
-  Recipe _fromMap(Map<String, dynamic> data,
-      {bool sqlFormat = true, String appPath}) {
-    final bool hasImage =
-        sqlFormat ? data['hasImage'] == 1 ? true : false : data['hasImage'];
-    final String id = data['id'];
-    final String path = join(appPath, '$id.jpg');
-    return Recipe(
-        id: id,
-        name: data['name'],
-        path: hasImage ? path : '',
-        hasImage: hasImage,
-        sync: sqlFormat ? data['sync'] == 1 ? true : false : true,
-        cookTime: data['cookTime'],
-        prepTime: data['prepTime'],
-        people: data['people'],
-        ingredients: sqlFormat
-            ? jsonDecode(data['ingredients']).cast<String>()
-            : data['ingredients'].cast<String>(),
-        steps: sqlFormat
-            ? jsonDecode(data['steps']).cast<String>()
-            : data['steps'].cast<String>(),
-        notes: data['notes']);
-  }
+Recipe fromMap(Map<String, dynamic> data,
+    {bool sqlFormat = true, String appPath}) {
+  final bool hasImage =
+      sqlFormat ? data['hasImage'] == 1 ? true : false : data['hasImage'];
+  final String id = data['id'];
+  final String path = join(appPath, '$id.jpg');
+  return Recipe(
+      id: id,
+      name: data['name'],
+      path: hasImage ? path : '',
+      hasImage: hasImage,
+      sync: sqlFormat ? data['sync'] == 1 ? true : false : true,
+      public: sqlFormat ? data['public'] == 1 ? true : false : data['public'],
+      cookTime: data['cookTime'],
+      prepTime: data['prepTime'],
+      people: data['people'],
+      ingredients: sqlFormat
+          ? jsonDecode(data['ingredients']).cast<String>()
+          : data['ingredients'].cast<String>(),
+      steps: sqlFormat
+          ? jsonDecode(data['steps']).cast<String>()
+          : data['steps'].cast<String>(),
+      notes: data['notes']);
 }

@@ -7,8 +7,10 @@ class RecipePreview extends StatelessWidget {
   final String name;
   final bool hasImage;
   final String path;
+  final bool localImage;
 
-  const RecipePreview({Key key, this.name, this.hasImage, this.path})
+  const RecipePreview(
+      {Key key, this.name, this.hasImage, this.path, this.localImage = true})
       : super(key: key);
 
   @override
@@ -21,12 +23,7 @@ class RecipePreview extends StatelessWidget {
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(defaultSize * 0.4)),
           child: Stack(children: [
-            if (hasImage)
-              Image.file(
-                File(path),
-                fit: BoxFit.cover,
-                width: double.infinity,
-              ),
+            if (hasImage) buildImage(),
             Positioned.fill(
                 child: Container(
               padding:
@@ -42,5 +39,30 @@ class RecipePreview extends StatelessWidget {
             ))
           ])),
     );
+  }
+
+  Image buildImage() {
+    if (localImage) {
+      return Image.file(
+        File(path),
+        fit: BoxFit.cover,
+        width: double.infinity,
+      );
+    } else {
+      return Image.network(path, fit: BoxFit.cover, width: double.infinity,
+          loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) {
+          return child;
+        } else {
+          return Center(
+            child: SizedBox(
+              child: CircularProgressIndicator(),
+              width: 40,
+              height: 40,
+            ),
+          );
+        }
+      });
+    }
   }
 }

@@ -65,14 +65,14 @@ class _BodyState extends State<Body> {
           ),
         Card(
           child: ListTile(
-            title: Text('Modifer mon consentement'),
+            title: Text('Modifier mon consentement'),
             trailing: Icon(Icons.arrow_forward),
             onTap: () => showConsentForm(),
           ),
         ),
         Card(
           child: ListTile(
-            title: Text("Plus d'information"),
+            title: Text("Plus d'informations"),
             onTap: () => _showDialog(context),
           ),
         )
