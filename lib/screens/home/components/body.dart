@@ -10,13 +10,20 @@ class Body extends StatelessWidget {
     return Consumer2<Recipes, Categories>(
         builder: (context, recipes, categories, child) => TabBarView(
               children: [
-                RecipeList(recipeList: recipes.items),
+                RecipeList(recipeList: orderRecipe(recipes.items)),
                 ...categories.items.map((category) => RecipeList(
-                    recipeList: recipes.items
+                    recipeList: orderRecipe(recipes.items
                         .where(
                             (recipe) => category.recipeIds.contains(recipe.id))
-                        .toList()))
+                        .toList())))
               ],
             ));
+  }
+
+  List<Recipe> orderRecipe(List<Recipe> recipes) {
+    return [
+      ...recipes.where((Recipe recipe) => recipe.hasImage).toList(),
+      ...recipes.where((Recipe recipe) => !recipe.hasImage).toList()
+    ];
   }
 }
