@@ -141,8 +141,8 @@ class _BodyState extends State<Body> {
         imageCache.clear();
         image.copy(path);
 
-        if (widget.edit != null && widget.edit.hasImage) {
-          // delete phto
+        if (isEditing && widget.edit.hasImage) {
+          // delete photo
           String oldPath = join(appPath, widget.edit.id + '.jpg');
           await File(oldPath).delete();
         }
@@ -175,7 +175,8 @@ class _BodyState extends State<Body> {
       Recipes recipes = Provider.of<Recipes>(this.context, listen: false);
 
       void syncCallback() {
-        if (selectedCategories.isNotEmpty) {
+        if (selectedCategories.isNotEmpty ||
+            widget.defaultSelectedCategories.isNotEmpty) {
           categories.syncCategories(selectedCategories);
         }
       }

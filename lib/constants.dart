@@ -9,6 +9,8 @@ const kPrimaryColor = Colors.lightGreen;
 const kTextColor = Colors.black;
 const kTextSecondaryColor = Colors.white;
 
+const testDevices = ['DE4000BBEFBE907EB50B17AB2B9C6A33'];
+
 Database _database;
 
 Future<Database> getDatabase() async {
@@ -33,12 +35,12 @@ _initDatabase() async {
 
 final AdmobConsent _admobConsent = AdmobConsent();
 
-bool _consent;
+bool consent;
 
 void initConsent() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  _consent = prefs.getBool('consent') ?? null;
-  if (_consent == null) {
+  consent = prefs.getBool('consent') ?? null;
+  if (consent == null) {
     showConsentForm(initSDK: true);
   }
 }
@@ -52,15 +54,15 @@ void showConsentForm({bool initSDK = false}) {
       FirebaseAdMob.instance
           .initialize(appId: 'ca-app-pub-8850562463084333~3958573142');
     }
-    _consent = status;
+    consent = status;
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool('consent', _consent);
+    prefs.setBool('consent', consent);
   });
 }
 
 MobileAdTargetingInfo getTargetingInfo() {
   return MobileAdTargetingInfo(
-      nonPersonalizedAds: !_consent,
+      nonPersonalizedAds: !consent,
       childDirected: false,
-      testDevices: ['DE4000BBEFBE907EB50B17AB2B9C6A33']);
+      testDevices: testDevices);
 }

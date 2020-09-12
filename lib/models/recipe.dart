@@ -210,7 +210,7 @@ class Recipes extends ChangeNotifier {
 
     items = List.generate(maps.length, (index) {
       return fromMap(maps[index], appPath: appPath);
-    }).reversed;
+    }).reversed.toList();
     notifyListeners();
 
     final List<Map<String, dynamic>> deletedRecipesMaps =

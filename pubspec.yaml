@@ -52,6 +52,7 @@ dependencies:
   firebase_remote_config:
   url_launcher:
   connectivity: 0.4.9
+  flutter_native_admob:
 
   
 
