@@ -46,7 +46,7 @@ class _BodyState extends State<Body> {
 
   StreamSubscription _streamSubscription;
 
-  final PageController _controller = PageController(viewportFraction: 0.8);
+  final PageController _controller = PageController(viewportFraction: 1);
   final Duration duration = Duration(milliseconds: 500);
   final Curve curve = Curves.easeOutQuint;
 
@@ -77,6 +77,7 @@ class _BodyState extends State<Body> {
       int next = _controller.page.round();
 
       if (currentPage != next) {
+        FocusScope.of(this.context).unfocus();
         setState(() {
           currentPage = next;
         });
@@ -100,8 +101,8 @@ class _BodyState extends State<Body> {
         ? widget.edit.hasImage ? File(widget.edit.path) : null
         : null;
 
-    ingredients = isEditing ? widget.edit.ingredients : [''];
-    steps = isEditing ? widget.edit.steps : [''];
+    ingredients = isEditing ? widget.edit.ingredients : [];
+    steps = isEditing ? widget.edit.steps : [];
     notes = isEditing ? widget.edit.notes : '';
   }
 
@@ -117,6 +118,7 @@ class _BodyState extends State<Body> {
     if (isFirst) {
       Navigator.pop(this.context);
     } else {
+      FocusScope.of(this.context).unfocus();
       setState(() {
         currentPage = currentPage - 1;
       });
@@ -126,95 +128,103 @@ class _BodyState extends State<Body> {
 
   void rightPress(bool isLast) async {
     if (isLast) {
-      //show ad
-      if (await _interstitialAd.isLoaded()) {
-        _interstitialAd.show();
-      }
-
-      final String id = Uuid().v4();
-      String path;
-      // Save photo
-      if (image != null) {
-        final String appPath = (await getApplicationDocumentsDirectory()).path;
-        path = join(appPath, '$id.jpg');
-        // save photo
-        imageCache.clear();
-        image.copy(path);
-
-        if (isEditing && widget.edit.hasImage) {
-          // delete photo
-          String oldPath = join(appPath, widget.edit.id + '.jpg');
-          await File(oldPath).delete();
-        }
-      }
-      // Add recipe
-      Recipe recipe = new Recipe(
-          id: id,
-          path: path ?? '',
-          hasImage: image != null ? true : false,
-          name: recipeName,
-          prepTime: prepTime,
-          cookTime: cookTime,
-          people: people,
-          ingredients:
-              ingredients.where((ingredient) => ingredient != '').toList(),
-          steps: steps.where((step) => step != '').toList(),
-          notes: notes);
-      // Add recipe to selected categories
-      Categories categories =
-          Provider.of<Categories>(this.context, listen: false);
-
-      if (isEditing && widget.defaultSelectedCategories.isNotEmpty) {
-        await categories.removeRecipeId(widget.edit.id);
-      }
-
-      if (selectedCategories.isNotEmpty) {
-        await categories.addRecipeId(selectedCategories, id);
-      }
-
-      Recipes recipes = Provider.of<Recipes>(this.context, listen: false);
-
-      void syncCallback() {
-        if (selectedCategories.isNotEmpty ||
-            widget.defaultSelectedCategories.isNotEmpty) {
-          categories.syncCategories(selectedCategories);
-        }
-      }
-
-      if (isEditing) {
-        recipes.editRecipe(
-            widget.edit.id, widget.edit.sync, widget.edit.hasImage, recipe,
-            categories: categories.serverCategories != null
-                ? categories.serverCategories.toList()
-                : null,
-            callback: syncCallback);
+      if (recipeName == null || recipeName == '') {
+        Scaffold.of(this.context).showSnackBar(SnackBar(
+          content: Text('Un nom de recette est requis'),
+        ));
       } else {
-        recipes.addRecipe(recipe,
-            categories: categories.serverCategories != null
-                ? categories.serverCategories.toList()
-                : null,
-            callback: syncCallback);
-      }
+        //show ad
+        if (await _interstitialAd.isLoaded()) {
+          _interstitialAd.show();
+        }
 
-      Navigator.pop(this.context);
-      if (isEditing) {
-        Navigator.pushReplacement(
-            this.context,
-            MaterialPageRoute(
-              builder: (context) => RecipeScreen(
-                recipe: recipe,
-              ),
-            ));
+        final String id = Uuid().v4();
+        String path;
+        // Save photo
+        if (image != null) {
+          final String appPath =
+              (await getApplicationDocumentsDirectory()).path;
+          path = join(appPath, '$id.jpg');
+          // save photo
+          image.copy(path);
+
+          if (isEditing && widget.edit.hasImage) {
+            // delete photo
+            String oldPath = join(appPath, widget.edit.id + '.jpg');
+            File(oldPath).delete();
+            //imageCache.clear();
+          }
+        }
+        // Add recipe
+        Recipe recipe = new Recipe(
+            id: id,
+            path: path ?? '',
+            hasImage: image != null ? true : false,
+            name: recipeName,
+            prepTime: prepTime,
+            cookTime: cookTime,
+            people: people,
+            ingredients:
+                ingredients.where((ingredient) => ingredient != '').toList(),
+            steps: steps.where((step) => step != '').toList(),
+            notes: notes);
+        // Add recipe to selected categories
+        Categories categories =
+            Provider.of<Categories>(this.context, listen: false);
+
+        if (isEditing && widget.defaultSelectedCategories.isNotEmpty) {
+          await categories.removeRecipeId(widget.edit.id);
+        }
+
+        if (selectedCategories.isNotEmpty) {
+          await categories.addRecipeId(selectedCategories, id);
+        }
+
+        Recipes recipes = Provider.of<Recipes>(this.context, listen: false);
+
+        void syncCallback() {
+          if (selectedCategories.isNotEmpty ||
+              widget.defaultSelectedCategories.isNotEmpty) {
+            categories.syncCategories(selectedCategories);
+          }
+        }
+
+        if (isEditing) {
+          recipes.editRecipe(
+              widget.edit.id, widget.edit.sync, widget.edit.hasImage, recipe,
+              categories: categories.serverCategories != null
+                  ? categories.serverCategories.toList()
+                  : null,
+              callback: syncCallback);
+        } else {
+          recipes.addRecipe(recipe,
+              categories: categories.serverCategories != null
+                  ? categories.serverCategories.toList()
+                  : null,
+              callback: syncCallback);
+        }
+
+        Navigator.pop(this.context);
+        if (isEditing) {
+          Navigator.pushReplacement(
+              this.context,
+              MaterialPageRoute(
+                builder: (context) => RecipeScreen(
+                  recipe: recipe,
+                ),
+              ));
+        } else {
+          FocusScope.of(this.context).unfocus();
+          setState(() {
+            currentPage = currentPage + 1;
+          });
+          _controller.animateToPage(
+            currentPage,
+            duration: duration,
+            curve: curve,
+          );
+        }
       }
-    } else {
-      setState(() {
-        currentPage = currentPage + 1;
-      });
-      _controller.animateToPage(
-        currentPage,
-        duration: duration,
-        curve: curve,
-      );
     }
   }
 
@@ -259,7 +269,7 @@ class _BodyState extends State<Body> {
         body: Page4(
           listItem: ingredients,
           buttonText: 'Ajouter un ingrédient',
-          labelText: 'Ingrédient',
+          itemName: 'ingrédient',
           callback: (List<String> list) => ingredients = list,
         ),
       ),
@@ -268,7 +278,7 @@ class _BodyState extends State<Body> {
         body: Page4(
           listItem: steps,
           buttonText: 'Ajouter une etape',
-          labelText: 'Étape',
+          itemName: 'étape',
           callback: (List<String> list) => steps = list,
         ),
       ),
@@ -285,13 +295,9 @@ class _BodyState extends State<Body> {
       controller: _controller,
       itemCount: pages.length,
       itemBuilder: (context, index) {
-        final bool active = currentPage == index;
         final Page page = pages[index];
         final bool isFirst = index == 0;
         final bool isLast = index == pages.length - 1;
-        final double blur = active ? 20 : 0;
-        final double offset = active ? 5 : 0;
-        final double top = active ? 25 : 100;
         final String leftText = isFirst ? 'Annuler' : 'Retour';
         final String rightText = isLast ? 'Terminer' : 'Suivant';
 
@@ -299,29 +305,17 @@ class _BodyState extends State<Body> {
           duration: duration,
           curve: curve,
           padding: EdgeInsets.all(20),
-          margin: EdgeInsets.only(top: top, bottom: 25, right: 30),
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black87,
-                    blurRadius: blur,
-                    offset: Offset(offset, offset))
-              ]),
           child: Column(
             children: [
               Container(
-                alignment: Alignment.bottomCenter,
-                height: SizeConfig.orientation == Orientation.portrait
-                    ? SizeConfig.defaultSize * 6
-                    : SizeConfig.defaultSize * 2.5,
+                margin:
+                    EdgeInsets.symmetric(vertical: SizeConfig.defaultSize * 6),
                 child: Text(
                   page.title,
                   style: TextStyle(fontSize: SizeConfig.defaultSize * 2),
                 ),
               ),
-              Expanded(child: Center(child: page.body)),
+              Expanded(child: page.body),
               BottomButtons(
                 leftText: leftText,
                 leftPress: () => leftPress(isFirst),

@@ -30,6 +30,7 @@ class CategoriesScreen extends StatelessWidget {
   }
 
   _showCreateDialog(BuildContext context, {Category edit}) async {
+    final _formKey = GlobalKey<FormState>();
     if (edit != null) {
       _controller.text = edit.name;
     } else {
@@ -37,52 +38,59 @@ class CategoriesScreen extends StatelessWidget {
     }
     await showDialog<String>(
         context: context,
-        child: AlertDialog(
-          contentPadding: EdgeInsets.all(16),
-          content: Row(
-            children: [
-              Expanded(
-                child: new TextField(
-                  controller: _controller,
-                  autofocus: true,
-                  decoration:
-                      new InputDecoration(labelText: 'Nom de la catégorie'),
+        child: Form(
+          key: _formKey,
+          child: AlertDialog(
+            contentPadding: EdgeInsets.all(16),
+            content: TextFormField(
+              controller: _controller,
+              autofocus: true,
+              decoration: new InputDecoration(labelText: 'Nom de la catégorie'),
+              validator: (String value) {
+                if (value.trim().isEmpty) {
+                  return 'Un nom est requis';
+                } else {
+                  return null;
+                }
+              },
+            ),
+            actions: [
+              FlatButton(
+                child: Text(
+                  'Annuler',
+                  style: Theme.of(context).accentTextTheme.button,
                 ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+              FlatButton(
+                child: Text(
+                  'Terminer',
+                  style: Theme.of(context).accentTextTheme.button,
+                ),
+                onPressed: () {
+                  if (_formKey.currentState.validate()) {
+                    Categories categories =
+                        Provider.of<Categories>(context, listen: false);
+                    if (edit != null) {
+                      String oldId = edit.id;
+                      edit.name = _controller.text;
+                      edit.id = Uuid().v4();
+                      categories.editCategory(oldId, edit);
+                    } else {
+                      Category category = new Category(
+                          name: _controller.text,
+                          recipeIds: [],
+                          id: Uuid().v4());
+                      categories.addCategory(category);
+                    }
+                    Navigator.pop(context);
+                  }
+                },
               )
             ],
           ),
-          actions: [
-            FlatButton(
-              child: Text(
-                'Annuler',
-                style: Theme.of(context).accentTextTheme.button,
-              ),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-            FlatButton(
-              child: Text(
-                'Terminer',
-                style: Theme.of(context).accentTextTheme.button,
-              ),
-              onPressed: () {
-                Categories categories =
-                    Provider.of<Categories>(context, listen: false);
-                if (edit != null) {
-                  String oldId = edit.id;
-                  edit.name = _controller.text;
-                  edit.id = Uuid().v4();
-                  categories.editCategory(oldId, edit);
-                } else {
-                  Category category = new Category(
-                      name: _controller.text, recipeIds: [], id: Uuid().v4());
-                  categories.addCategory(category);
-                }
-                Navigator.pop(context);
-              },
-            )
-          ],
         ));
   }
 }

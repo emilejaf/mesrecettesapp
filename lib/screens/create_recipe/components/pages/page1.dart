@@ -49,34 +49,31 @@ class _Page1State extends State<Page1> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          TextField(
-            controller: _nameController,
-            autofocus: true,
-            textCapitalization: TextCapitalization.sentences,
-            onChanged: widget.callbackRecipeName,
-            decoration: InputDecoration(labelText: ('Nom de recette')),
-          ),
-          TextField(
-            controller: _prepTimeController,
-            onChanged: widget.callbackPrepTime,
-            decoration: InputDecoration(labelText: ('Temps de préparation')),
-          ),
-          TextField(
-            controller: _cookTimeController,
-            onChanged: widget.callbackCookTime,
-            decoration: InputDecoration(labelText: ('Temps de cuisson')),
-          ),
-          TextField(
-            controller: _peopleController,
-            onChanged: (value) => {widget.callbackPeople(value)},
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: ('Nombre de personnes')),
-          ),
-        ],
-      ),
+    return ListView(
+      children: [
+        TextField(
+          controller: _nameController,
+          textCapitalization: TextCapitalization.sentences,
+          onChanged: widget.callbackRecipeName,
+          decoration: InputDecoration(labelText: ('Nom de recette')),
+        ),
+        TextField(
+          controller: _prepTimeController,
+          onChanged: widget.callbackPrepTime,
+          decoration: InputDecoration(labelText: ('Temps de préparation')),
+        ),
+        TextField(
+          controller: _cookTimeController,
+          onChanged: widget.callbackCookTime,
+          decoration: InputDecoration(labelText: ('Temps de cuisson')),
+        ),
+        TextField(
+          controller: _peopleController,
+          onChanged: (value) => {widget.callbackPeople(value)},
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(labelText: ('Nombre de personnes')),
+        ),
+      ],
     );
   }
 

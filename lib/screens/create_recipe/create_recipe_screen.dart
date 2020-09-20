@@ -39,7 +39,9 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: Text('Créer une recette'),
+      ),
       body: Body(
         edit: widget.edit,
         defaultSelectedCategories: widget.defaultSelectedCategories,

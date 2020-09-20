@@ -1,6 +1,6 @@
 import 'package:flutter_native_admob/flutter_native_admob.dart';
 import 'package:flutter_native_admob/native_admob_controller.dart';
-import 'package:flutter_native_admob/native_admob_options.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:mesrecettes/constants.dart';
 import 'package:mesrecettes/screens/recipe/components/recipe_preview.dart';
 import 'package:mesrecettes/screens/recipe/recipe_screen.dart';
@@ -18,7 +18,7 @@ class RecipeList extends StatefulWidget {
 }
 
 class _RecipeListState extends State<RecipeList> {
-  List<NativeAdmobController> _controllers;
+  NativeAdmobController _controller;
 
   void openRecipeScreen(context, recipe) {
     Navigator.push(context,
@@ -37,16 +37,20 @@ class _RecipeListState extends State<RecipeList> {
   @override
   void initState() {
     super.initState();
-    _controllers = [];
+    _controller = NativeAdmobController();
+    _controller.setTestDeviceIds(testDevices);
+
+    if (consent == null) {
+      _controller.setNonPersonalizedAds(true);
+    } else {
+      _controller.setNonPersonalizedAds(!consent);
+    }
   }
 
   @override
   void dispose() {
     super.dispose();
-
-    _controllers.forEach((controller) {
-      controller.dispose();
-    });
+    _controller.dispose();
   }
 
   @override
@@ -56,41 +60,52 @@ class _RecipeListState extends State<RecipeList> {
         padding: EdgeInsets.symmetric(
           horizontal: SizeConfig.defaultSize * 0.6,
         ),
-        child: GridView.builder(
+        child: StaggeredGridView.countBuilder(
             itemCount: getItemCount(widget.recipeList.length),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount:
-                    SizeConfig.orientation == Orientation.landscape ? 2 : 1,
-                mainAxisSpacing: SizeConfig.defaultSize * 0.3,
-                crossAxisSpacing:
-                    SizeConfig.orientation == Orientation.landscape
-                        ? SizeConfig.defaultSize * 2
-                        : 0,
-                childAspectRatio: 16 / 9),
+            primary: true,
+            crossAxisCount: 1,
+            mainAxisSpacing: 4.0,
+            crossAxisSpacing: 4.0,
+            staggeredTileBuilder: (index) {
+              if ((index + 1) % 4 == 0) {
+                return new StaggeredTile.fit(1);
+              } else {
+                return new StaggeredTile.fit(1);
+              }
+            },
             itemBuilder: (context, index) {
               if ((index + 1) % 4 == 0) {
-                NativeAdmobController _controller = NativeAdmobController();
-
-                _controller.setTestDeviceIds(testDevices);
-
-                _controller.setNonPersonalizedAds(!consent);
-                _controllers.add(_controller);
-                return Card(
-                  clipBehavior: Clip.antiAliasWithSaveLayer,
-                  shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(SizeConfig.defaultSize * 0.4)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: NativeAdmob(
-                      adUnitID: 'ca-app-pub-8850562463084333/4731800008',
-                      controller: _controller,
-                      type: NativeAdmobType.full,
-                      loading: Container(),
-                      error: Container(),
-                    ),
-                  ),
-                );
+                return StreamBuilder<Object>(
+                    stream: _controller.stateChanged,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError ||
+                          snapshot.data == AdLoadState.loadError ||
+                          snapshot.data == AdLoadState.loading) {
+                        return Container(
+                          height: 0,
+                        );
+                      } else {
+                        return Container(
+                          height: 100,
+                          child: Card(
+                            clipBehavior: Clip.antiAliasWithSaveLayer,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                    SizeConfig.defaultSize * 0.4)),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: NativeAdmob(
+                                adUnitID:
+                                    'ca-app-pub-8850562463084333/4731800008',
+                                controller: _controller,
+                                type: NativeAdmobType.banner,
+                                error: Container(),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                    });
               } else {
                 int newIndex = index - ((index + 1) / 4).floor();
                 return buildRecipePreviewCard(

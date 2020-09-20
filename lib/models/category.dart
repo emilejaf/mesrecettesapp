@@ -28,16 +28,21 @@ class Category {
   }
 }
 
+bool listening = false;
+
 class Categories extends ChangeNotifier {
   FirebaseUser _user;
   Set<Map<String, dynamic>> serverCategories;
 
   Categories({Stream categoriesStream, Stream userStream}) {
-    _init(categoriesStream);
+    _init(categoriesStream, listening);
 
-    userStream.listen((event) {
-      _user = event;
-    });
+    if (listening == false) {
+      userStream.listen((event) {
+        _user = event;
+      });
+      listening = true;
+    }
   }
 
   void addCategory(Category category) async {
@@ -201,7 +206,7 @@ class Categories extends ChangeNotifier {
     return _user != null && serverCategories != null;
   }
 
-  void _init(Stream categoriesStream) async {
+  void _init(Stream categoriesStream, bool listening) async {
     final Database db = await getDatabase();
 
     final List<Map<String, dynamic>> maps = await db.query('categories');
@@ -217,72 +222,75 @@ class Categories extends ChangeNotifier {
     deletedCategories = List.generate(deletedCategoriesMaps.length,
         (index) => deletedCategoriesMaps[index]['id']);
 
-    categoriesStream.listen((event) {
-      // categories list from firestore
-      if (event != null) {
-        serverCategories = event.toSet();
+    if (listening == false) {
+      categoriesStream.listen((event) {
+        // categories list from firestore
+        if (event != null) {
+          serverCategories = event.toSet();
 
-        if (items.isNotEmpty) {
-          // we may have categories to upload or to delete
-          Set<String> serverCategoriesIds =
-              serverCategories.map((map) => map['id']).cast<String>().toSet();
-          items
-              .where((Category category) =>
-                  !category.sync && !serverCategoriesIds.contains(category.id))
-              .forEach((Category category) {
-            // recipe to sync
-            _syncCategory(db, category);
-          });
-
-          // check for categories to delete locally
-          final Set<String> serverCategoiesId =
-              serverCategories.map((e) => e['id']).cast<String>().toSet();
-
-          final Set<String> firestoreDeletedCategoriesIds = items
-              .where((Category category) =>
-                  category.sync && !serverCategoiesId.contains(category.id))
-              .map((Category category) => category.id)
-              .toSet();
-
-          items.removeWhere((Category category) =>
-              firestoreDeletedCategoriesIds.contains(category.id));
-          notifyListeners();
-
-          if (firestoreDeletedCategoriesIds.isNotEmpty) {
-            Batch batch = db.batch();
-
-            firestoreDeletedCategoriesIds.forEach((String id) {
-              batch.delete('categories', where: 'id = ?', whereArgs: [id]);
+          if (items.isNotEmpty) {
+            // we may have categories to upload or to delete
+            Set<String> serverCategoriesIds =
+                serverCategories.map((map) => map['id']).cast<String>().toSet();
+            items
+                .where((Category category) =>
+                    !category.sync &&
+                    !serverCategoriesIds.contains(category.id))
+                .forEach((Category category) {
+              // recipe to sync
+              _syncCategory(db, category);
             });
 
-            batch.commit(noResult: true);
-          }
-        }
+            // check for categories to delete locally
+            final Set<String> serverCategoiesId =
+                serverCategories.map((e) => e['id']).cast<String>().toSet();
 
-        // check for recipe to delete from firestore
-        deletedCategories.forEach((String categoryId) {
-          // delete category to firestore
-          _deleteCategoryFromFirestore(db, categoryId);
-        });
+            final Set<String> firestoreDeletedCategoriesIds = items
+                .where((Category category) =>
+                    category.sync && !serverCategoiesId.contains(category.id))
+                .map((Category category) => category.id)
+                .toSet();
 
-        //check for category to download
-        if (serverCategories.isNotEmpty) {
-          Set<String> localCategoryId =
-              items.map((Category category) => category.id).toSet();
-
-          serverCategories
-              .where((map) => !localCategoryId.contains(map['id']))
-              .forEach((map) {
-            Category category = _fromMap(map, sqlFormat: false);
-            items.insert(0, category);
+            items.removeWhere((Category category) =>
+                firestoreDeletedCategoriesIds.contains(category.id));
             notifyListeners();
 
-            db.insert('categories', category.toMap(),
-                conflictAlgorithm: ConflictAlgorithm.replace);
+            if (firestoreDeletedCategoriesIds.isNotEmpty) {
+              Batch batch = db.batch();
+
+              firestoreDeletedCategoriesIds.forEach((String id) {
+                batch.delete('categories', where: 'id = ?', whereArgs: [id]);
+              });
+
+              batch.commit(noResult: true);
+            }
+          }
+
+          // check for recipe to delete from firestore
+          deletedCategories.forEach((String categoryId) {
+            // delete category to firestore
+            _deleteCategoryFromFirestore(db, categoryId);
           });
+
+          //check for category to download
+          if (serverCategories.isNotEmpty) {
+            Set<String> localCategoryId =
+                items.map((Category category) => category.id).toSet();
+
+            serverCategories
+                .where((map) => !localCategoryId.contains(map['id']))
+                .forEach((map) {
+              Category category = _fromMap(map, sqlFormat: false);
+              items.insert(0, category);
+              notifyListeners();
+
+              db.insert('categories', category.toMap(),
+                  conflictAlgorithm: ConflictAlgorithm.replace);
+            });
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   List<Category> items = [];

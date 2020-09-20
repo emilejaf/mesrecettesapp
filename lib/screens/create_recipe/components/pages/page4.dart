@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:mesrecettes/screens/create_recipe/components/my_text_input.dart';
+import 'package:mesrecettes/size_config.dart';
 
 class Page4 extends StatefulWidget {
   final String buttonText;
-  final String labelText;
+  final String itemName;
   final List<String> listItem;
   final Function callback;
 
   const Page4(
-      {Key key, this.callback, this.buttonText, this.labelText, this.listItem})
+      {Key key, this.callback, this.buttonText, this.listItem, this.itemName})
       : super(key: key);
 
   @override
@@ -17,33 +17,43 @@ class Page4 extends StatefulWidget {
 
 class _Page4State extends State<Page4> {
   ScrollController _scrollController;
+  TextEditingController _editingController;
 
   @override
   void initState() {
-    _scrollController = ScrollController();
     super.initState();
+    _scrollController = ScrollController();
+    _editingController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _editingController = TextEditingController();
   }
 
   void notifyParent() {
     widget.callback(widget.listItem);
   }
 
-  void remove(int index) {
+  void removeItem(int index) {
     setState(() {
       widget.listItem.removeAt(index);
     });
     notifyParent();
   }
 
-  void addItem() {
+  void addItem(String text) {
     setState(() {
-      widget.listItem.add('');
+      widget.listItem.add(text);
     });
     notifyParent();
   }
 
-  void updateText(int index, String text) {
-    widget.listItem[index] = text;
+  void editItem(int index, String text) {
+    setState(() {
+      widget.listItem[index] = text;
+    });
     notifyParent();
   }
 
@@ -74,22 +84,99 @@ class _Page4State extends State<Page4> {
                 return buildItem(index, text);
               }).toList()),
         ),
-        FlatButton(
-          color: Theme.of(context).accentColor,
-          child: Text(widget.buttonText),
-          onPressed: addItem,
+        Padding(
+          padding: EdgeInsets.only(bottom: SizeConfig.defaultSize * 2),
+          child: FlatButton(
+            color: Theme.of(context).accentColor,
+            child: Text(
+              widget.buttonText,
+              style: TextStyle(color: Colors.white),
+            ),
+            onPressed: () => showItemDialog(),
+          ),
         )
       ],
     );
   }
 
   Widget buildItem(int index, String text) {
-    return MyTextInput(
-      key: Key(index.toString() + widget.labelText),
-      labelText: widget.labelText + ' ' + (index + 1).toString(),
-      updateText: (String text) => updateText(index, text),
-      text: text,
-      onRemove: () => remove(index),
+    return Card(
+      key: Key(index.toString() + widget.itemName),
+      child: ListTile(
+        title: Text(
+          text,
+          style: TextStyle(color: Colors.black),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            InkWell(
+                child: Icon(Icons.edit),
+                onTap: () => showItemDialog(oldText: text, index: index)),
+            InkWell(
+              child: Icon(Icons.delete),
+              onTap: () => removeItem(index),
+            )
+          ],
+        ),
+      ),
     );
+  }
+
+  showItemDialog({String oldText, int index}) async {
+    final _formKey = GlobalKey<FormState>();
+    if (oldText == null) {
+      _editingController.clear();
+    } else {
+      _editingController.text = oldText;
+    }
+
+    showDialog(
+        context: context,
+        child: Form(
+          key: _formKey,
+          child: AlertDialog(
+            content: TextFormField(
+              controller: _editingController,
+              autofocus: true,
+              decoration:
+                  new InputDecoration(labelText: "Nom de l'" + widget.itemName),
+              validator: (String value) {
+                if (value.trim().isEmpty) {
+                  return 'Un nom est requis';
+                } else {
+                  return null;
+                }
+              },
+            ),
+            actions: [
+              FlatButton(
+                child: Text(
+                  'Annuler',
+                  style: Theme.of(context).accentTextTheme.button,
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+              FlatButton(
+                child: Text(
+                  'Terminer',
+                  style: Theme.of(context).accentTextTheme.button,
+                ),
+                onPressed: () {
+                  if (_formKey.currentState.validate()) {
+                    if (oldText != null) {
+                      editItem(index, _editingController.text);
+                    } else {
+                      addItem(_editingController.text);
+                    }
+                    Navigator.pop(context);
+                  }
+                },
+              )
+            ],
+          ),
+        ));
   }
 }

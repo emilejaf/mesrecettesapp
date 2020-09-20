@@ -64,7 +64,7 @@ class _Page3State extends State<Page3> {
   Widget build(BuildContext context) {
     double defaultSize = SizeConfig.defaultSize;
     return Container(
-      alignment: Alignment.center,
+      alignment: Alignment.topCenter,
       child: Card(
         child: SingleChildScrollView(
           child: Column(

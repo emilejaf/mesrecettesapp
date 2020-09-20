@@ -56,16 +56,21 @@ class Recipe {
   }
 }
 
+bool listening = false;
+
 class Recipes extends ChangeNotifier {
   FirebaseUser _user;
   Set<String> recipeIds;
 
   Recipes({Stream recipeIdsStream, Stream userStream}) {
-    _init(recipeIdsStream);
+    _init(recipeIdsStream, listening);
 
-    userStream.listen((event) {
-      _user = event;
-    });
+    if (listening == false) {
+      userStream.listen((event) {
+        _user = event;
+      });
+      listening = true;
+    }
   }
 
   void addRecipe(Recipe recipe,
@@ -202,7 +207,7 @@ class Recipes extends ChangeNotifier {
     }
   }
 
-  void _init(Stream recipeIdsStream) async {
+  void _init(Stream recipeIdsStream, bool listening) async {
     final Database db = await getDatabase();
 
     final List<Map<String, dynamic>> maps = await db.query('recipes');
@@ -219,76 +224,78 @@ class Recipes extends ChangeNotifier {
     deletedRecipes = List.generate(
         deletedRecipesMaps.length, (index) => deletedRecipesMaps[index]['id']);
 
-    recipeIdsStream.listen((event) async {
-      // recipeIds list from firestore
-      if (event != null) {
-        recipeIds = event.cast<String>().toSet();
-        if (items.isNotEmpty) {
-          // we may recipe to delete or to upload
-          items
-              .where((Recipe recipe) =>
-                  !recipe.sync && !recipeIds.contains(recipe.id))
-              .forEach((Recipe recipe) {
-            // recipe to sync
-            // recipe have to be added to firestore
-            _syncRecipe(db, recipe);
-          });
-
-          // check for recipe to delete locally
-          final Set<String> firestoreDeletedRecipesIds = items
-              .where((Recipe recipe) =>
-                  recipe.sync && !recipeIds.contains(recipe.id))
-              .map((Recipe recipe) => recipe.id)
-              .toSet();
-          items.removeWhere((Recipe recipe) =>
-              firestoreDeletedRecipesIds.contains(recipe.id));
-          notifyListeners();
-
-          if (firestoreDeletedRecipesIds.isNotEmpty) {
-            Batch batch = db.batch();
-
-            firestoreDeletedRecipesIds.forEach((String id) {
-              batch.delete('recipes', where: 'id = ?', whereArgs: [id]);
+    if (listening == false) {
+      recipeIdsStream.listen((event) async {
+        // recipeIds list from firestore
+        if (event != null) {
+          recipeIds = event.cast<String>().toSet();
+          if (items.isNotEmpty) {
+            // we may recipe to delete or to upload
+            items
+                .where((Recipe recipe) =>
+                    !recipe.sync && !recipeIds.contains(recipe.id))
+                .forEach((Recipe recipe) {
+              // recipe to sync
+              // recipe have to be added to firestore
+              _syncRecipe(db, recipe);
             });
 
-            batch.commit(noResult: true);
+            // check for recipe to delete locally
+            final Set<String> firestoreDeletedRecipesIds = items
+                .where((Recipe recipe) =>
+                    recipe.sync && !recipeIds.contains(recipe.id))
+                .map((Recipe recipe) => recipe.id)
+                .toSet();
+            items.removeWhere((Recipe recipe) =>
+                firestoreDeletedRecipesIds.contains(recipe.id));
+            notifyListeners();
+
+            if (firestoreDeletedRecipesIds.isNotEmpty) {
+              Batch batch = db.batch();
+
+              firestoreDeletedRecipesIds.forEach((String id) {
+                batch.delete('recipes', where: 'id = ?', whereArgs: [id]);
+              });
+
+              batch.commit(noResult: true);
+            }
+          }
+
+          deletedRecipes.forEach((String recipeId) {
+            // recipe to delete from firestore
+            final bool hasImage = deletedRecipesMaps
+                .firstWhere((element) => element['id'] == recipeId)['hasImage'];
+            _deleteRecipeFromFirestore(db, recipeId, hasImage);
+            // recipeIds.remove(recipeId); // update with new value
+          });
+          // check for recipe to download
+          if (recipeIds.isNotEmpty) {
+            // we may have recipe to download
+            Set<String> localRecipeIds =
+                items.map((Recipe recipe) => recipe.id).toSet();
+            recipeIds
+                .where((id) => !localRecipeIds.contains(id))
+                .forEach((String recipeId) {
+              // recipe id of the recipe to download
+              fireStoreHelper.getRecipe(recipeId).then((recipeMap) async {
+                Recipe recipe =
+                    fromMap(recipeMap, sqlFormat: false, appPath: appPath);
+
+                if (recipe.hasImage) {
+                  // we have to download image
+                  await fireStoreHelper.downloadFile(
+                      recipe.id + '.jpg', recipe.path);
+                }
+                items.insert(0, recipe);
+                notifyListeners();
+                db.insert('recipes', recipe.toMap(),
+                    conflictAlgorithm: ConflictAlgorithm.replace);
+              });
+            });
           }
         }
-
-        deletedRecipes.forEach((String recipeId) {
-          // recipe to delete from firestore
-          final bool hasImage = deletedRecipesMaps
-              .firstWhere((element) => element['id'] == recipeId)['hasImage'];
-          _deleteRecipeFromFirestore(db, recipeId, hasImage);
-          // recipeIds.remove(recipeId); // update with new value
-        });
-        // check for recipe to download
-        if (recipeIds.isNotEmpty) {
-          // we may have recipe to download
-          Set<String> localRecipeIds =
-              items.map((Recipe recipe) => recipe.id).toSet();
-          recipeIds
-              .where((id) => !localRecipeIds.contains(id))
-              .forEach((String recipeId) {
-            // recipe id of the recipe to download
-            fireStoreHelper.getRecipe(recipeId).then((recipeMap) async {
-              Recipe recipe =
-                  fromMap(recipeMap, sqlFormat: false, appPath: appPath);
-
-              if (recipe.hasImage) {
-                // we have to download image
-                await fireStoreHelper.downloadFile(
-                    recipe.id + '.jpg', recipe.path);
-              }
-              items.insert(0, recipe);
-              notifyListeners();
-              db.insert('recipes', recipe.toMap(),
-                  conflictAlgorithm: ConflictAlgorithm.replace);
-            });
-          });
-        }
-      }
-    });
+      });
+    }
   }
 
   List<Recipe> items = [];

@@ -23,14 +23,18 @@ class _Page5State extends State<Page5> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: EdgeInsets.all(SizeConfig.defaultSize),
-        child: TextField(
-          controller: _controller,
-          onChanged: widget.callback,
-          decoration: InputDecoration(hintText: 'Entrer vos notes ici'),
-          maxLines: 8,
+    return Container(
+      alignment: Alignment.topCenter,
+      child: Card(
+        child: Padding(
+          padding: EdgeInsets.all(SizeConfig.defaultSize),
+          child: TextField(
+            controller: _controller,
+            onChanged: widget.callback,
+            decoration: InputDecoration(
+                hintText: 'Entrer vos notes ici', border: InputBorder.none),
+            maxLines: 8,
+          ),
         ),
       ),
     );
