@@ -213,18 +213,18 @@ class _BodyState extends State<Body> {
                   recipe: recipe,
                 ),
               ));
-        } else {
-          FocusScope.of(this.context).unfocus();
-          setState(() {
-            currentPage = currentPage + 1;
-          });
-          _controller.animateToPage(
-            currentPage,
-            duration: duration,
-            curve: curve,
-          );
         }
       }
+    } else {
+      FocusScope.of(this.context).unfocus();
+      setState(() {
+        currentPage = currentPage + 1;
+      });
+      _controller.animateToPage(
+        currentPage,
+        duration: duration,
+        curve: curve,
+      );
     }
   }
 
@@ -232,7 +232,7 @@ class _BodyState extends State<Body> {
   Widget build(BuildContext context) {
     final List<Page> pages = [
       Page(
-          title: 'Informations Principales',
+          title: 'Informations principales',
           body: Page1(
             //Recipe name
             callbackRecipeName: (value) => {recipeName = value},

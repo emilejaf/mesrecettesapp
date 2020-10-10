@@ -139,6 +139,7 @@ class _Page4State extends State<Page4> {
             content: TextFormField(
               controller: _editingController,
               autofocus: true,
+              textCapitalization: TextCapitalization.sentences,
               decoration:
                   new InputDecoration(labelText: "Nom de l'" + widget.itemName),
               validator: (String value) {
