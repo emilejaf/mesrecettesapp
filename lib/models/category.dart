@@ -63,6 +63,7 @@ class Categories extends ChangeNotifier {
   }
 
   void editCategory(String oldCategoryId, Category newCategory) async {
+    notifyListeners();
     deletedCategories.add(oldCategoryId);
 
     final Database db = await getDatabase();

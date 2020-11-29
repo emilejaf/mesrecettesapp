@@ -30,14 +30,11 @@ class _RecipeListState extends State<RecipeList> {
   }
 
   int getItemCount(int listLength, Orientation orientation) {
-    print(listLength);
     int divider = getDivider(orientation);
     int adsCount = (listLength / divider).floor();
     if (adsCount >= 1 && (listLength + 1) % divider == 0) {
       adsCount = adsCount - 1;
     }
-
-    print(listLength + adsCount);
 
     return listLength + adsCount;
   }

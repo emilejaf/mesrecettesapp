@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mesrecettes/components/my_drawer.dart';
 import 'package:mesrecettes/screens/settings/components/body.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -10,7 +9,6 @@ class SettingsScreen extends StatelessWidget {
         title: Text('Paramètres'),
         centerTitle: true,
       ),
-      drawer: MyDrawer(),
       body: Body(),
     );
   }

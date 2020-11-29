@@ -1,5 +1,7 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:mesrecettes/components/my_scroll_behavior.dart';
 import 'package:mesrecettes/models/category.dart';
 import 'package:mesrecettes/models/nav_item.dart';
 import 'package:mesrecettes/models/user.dart';
@@ -17,8 +19,14 @@ void main() {
   Crashlytics.instance.enableInDevMode = true;
   FlutterError.onError = Crashlytics.instance.recordFlutterError;
 
-  runApp(MyApp());
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.dark));
 
+  runApp(MyApp());
   initConsent();
 }
 
@@ -59,9 +67,16 @@ class MyApp extends StatelessWidget {
           primaryColor: Colors.black,
           accentColor: Colors.lightGreen,
           scaffoldBackgroundColor: Colors.white,
-          appBarTheme: AppBarTheme(elevation: 0, color: Colors.white),
+          appBarTheme: AppBarTheme(
+              elevation: 0, color: Colors.white, brightness: Brightness.light),
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
+        builder: (context, child) {
+          return ScrollConfiguration(
+            behavior: MyBehavior(),
+            child: child,
+          );
+        },
         home: HomeScreen(),
       ),
     );

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mesrecettes/components/my_drawer.dart';
 import 'package:mesrecettes/models/category.dart';
 import 'package:mesrecettes/screens/categories/components/body.dart';
 import 'package:uuid/uuid.dart';
@@ -12,7 +11,6 @@ class CategoriesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(centerTitle: true, title: Text('Mes Catégories')),
-      drawer: MyDrawer(),
       resizeToAvoidBottomInset: false,
       body: Body(
         editCategory: (Category category) {

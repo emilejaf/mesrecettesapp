@@ -40,7 +40,8 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Créer une recette'),
+        title: Text(
+            widget.edit != null ? 'Modifer une recette' : 'Créer une recette'),
       ),
       body: Body(
         edit: widget.edit,

@@ -263,8 +263,11 @@ class Recipes extends ChangeNotifier {
 
           deletedRecipes.forEach((String recipeId) {
             // recipe to delete from firestore
-            final bool hasImage = deletedRecipesMaps
-                .firstWhere((element) => element['id'] == recipeId)['hasImage'];
+            final bool hasImage = deletedRecipesMaps.firstWhere(
+                        (element) => element['id'] == recipeId)['hasImage'] ==
+                    1
+                ? true
+                : false;
             _deleteRecipeFromFirestore(db, recipeId, hasImage);
             // recipeIds.remove(recipeId); // update with new value
           });

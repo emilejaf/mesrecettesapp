@@ -38,12 +38,9 @@ class _MyDrawerState extends State<MyDrawer> {
                 ] +
                 List.generate(navItems.items.length, (index) {
                   NavItem navitem = navItems.items[index];
-                  return buildNavigationTile(context,
-                      title: navitem.title,
-                      isActive: navItems.selectedIndex == index ? true : false,
+                  return buildNavigationTile(context, title: navitem.title,
                       press: () {
-                    if (navItems.selectedIndex != index) {
-                      if (navitem.replace) {
+                    /*if (navitem.replace) {
                         navItems.changeNavItem(index: index);
                         Navigator.pushReplacement(
                             context,
@@ -54,10 +51,14 @@ class _MyDrawerState extends State<MyDrawer> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) => navitem.destination));
-                      }
-                    } else {
-                      Navigator.pop(context);
-                    }
+                      } */
+
+                    Navigator.pop(context);
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => navitem.destination,
+                        ));
                   });
                 }),
           ),
@@ -67,11 +68,11 @@ class _MyDrawerState extends State<MyDrawer> {
   }
 
   ListTile buildNavigationTile(BuildContext context,
-      {String title, bool isActive = false, Function press}) {
+      {String title, Function press}) {
     return new ListTile(
-        title: Text(title),
-        onTap: press,
-        trailing: Icon(Icons.chevron_right),
-        selected: isActive);
+      title: Text(title),
+      onTap: press,
+      trailing: Icon(Icons.chevron_right),
+    );
   }
 }

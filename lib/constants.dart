@@ -6,7 +6,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:admob_consent/admob_consent.dart';
 
 const kPrimaryColor = Colors.lightGreen;
-const kTextColor = Colors.black;
+const kTextColor = Color(0xFF424242);
 const kTextSecondaryColor = Colors.white;
 
 const testDevices = ['DE4000BBEFBE907EB50B17AB2B9C6A33'];

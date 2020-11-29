@@ -17,39 +17,46 @@ class Body extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: defaultSize * 0.6),
       child: SingleChildScrollView(
-        child: Column(
-          children: <Widget>[
-            RecipePreview(
-              name: recipe.name,
-              hasImage: recipe.hasImage,
-              path: recipe.path,
-            ),
-            SizedBox(height: defaultSize * 0.6),
-            RecipeInformation(
-              cookTime: recipe.cookTime,
-              prepTime: recipe.prepTime,
-              people: recipe.people,
-            ),
-            SizedBox(height: defaultSize * 0.6),
-            RecipeExpansionPanel(
-              ingredients: recipe.ingredients,
-              steps: recipe.steps,
-              notes: recipe.notes,
-            ),
-            SizedBox(height: defaultSize * 0.6),
-            if (recipe.steps.length > 0)
-              FlatButton(
-                onPressed: () => _showStartRecipeDialog(context, recipe.steps),
-                color: Theme.of(context).buttonColor,
-                child: Text(
-                  'Démarrer la recette',
-                  style: Theme.of(context)
-                      .textTheme
-                      .button
-                      .copyWith(color: Colors.white),
+        child: Align(
+          alignment: Alignment.center,
+          child: Container(
+            constraints: BoxConstraints(maxWidth: 550),
+            child: Column(
+              children: <Widget>[
+                RecipePreview(
+                  name: recipe.name,
+                  hasImage: recipe.hasImage,
+                  path: recipe.path,
                 ),
-              ),
-          ],
+                SizedBox(height: defaultSize * 0.6),
+                RecipeInformation(
+                  cookTime: recipe.cookTime,
+                  prepTime: recipe.prepTime,
+                  people: recipe.people,
+                ),
+                SizedBox(height: defaultSize * 0.6),
+                RecipeExpansionPanel(
+                  ingredients: recipe.ingredients,
+                  steps: recipe.steps,
+                  notes: recipe.notes,
+                ),
+                SizedBox(height: defaultSize * 0.6),
+                if (recipe.steps.length > 0)
+                  FlatButton(
+                    onPressed: () =>
+                        _showStartRecipeDialog(context, recipe.steps),
+                    color: Theme.of(context).buttonColor,
+                    child: Text(
+                      'Démarrer la recette',
+                      style: Theme.of(context)
+                          .textTheme
+                          .button
+                          .copyWith(color: Colors.white),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );
