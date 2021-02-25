@@ -98,7 +98,9 @@ class _BodyState extends State<Body> {
     selectedCategories = isEditing ? [...widget.defaultSelectedCategories] : [];
 
     image = widget.edit != null
-        ? widget.edit.hasImage ? File(widget.edit.path) : null
+        ? widget.edit.hasImage
+            ? File(widget.edit.path)
+            : null
         : null;
 
     ingredients = isEditing ? widget.edit.ingredients : [];
@@ -185,7 +187,12 @@ class _BodyState extends State<Body> {
         void syncCallback() {
           if (selectedCategories.isNotEmpty ||
               widget.defaultSelectedCategories.isNotEmpty) {
-            categories.syncCategories(selectedCategories);
+            List<Category> syncCategories = selectedCategories;
+            if (widget.defaultSelectedCategories.isNotEmpty) {
+              syncCategories.addAll(widget.defaultSelectedCategories
+                  .where((category) => !selectedCategories.contains(category)));
+            }
+            categories.syncCategories(syncCategories);
           }
         }
 

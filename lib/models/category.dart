@@ -26,6 +26,18 @@ class Category {
     }
     return map;
   }
+
+  @override
+  String toString() {
+    return 'id: ' +
+        id +
+        ' name: ' +
+        name +
+        ' sync: ' +
+        sync.toString() +
+        ' recipeIds: ' +
+        recipeIds.toString();
+  }
 }
 
 bool listening = false;
@@ -231,7 +243,7 @@ class Categories extends ChangeNotifier {
 
           if (items.isNotEmpty) {
             // we may have categories to upload or to delete
-            Set<String> serverCategoriesIds =
+            final Set<String> serverCategoriesIds =
                 serverCategories.map((map) => map['id']).cast<String>().toSet();
             items
                 .where((Category category) =>
@@ -243,12 +255,9 @@ class Categories extends ChangeNotifier {
             });
 
             // check for categories to delete locally
-            final Set<String> serverCategoiesId =
-                serverCategories.map((e) => e['id']).cast<String>().toSet();
-
             final Set<String> firestoreDeletedCategoriesIds = items
                 .where((Category category) =>
-                    category.sync && !serverCategoiesId.contains(category.id))
+                    category.sync && !serverCategoriesIds.contains(category.id))
                 .map((Category category) => category.id)
                 .toSet();
 
@@ -267,7 +276,7 @@ class Categories extends ChangeNotifier {
             }
           }
 
-          // check for recipe to delete from firestore
+          // check for recipe to delete to firestore
           deletedCategories.forEach((String categoryId) {
             // delete category to firestore
             _deleteCategoryFromFirestore(db, categoryId);
@@ -283,11 +292,11 @@ class Categories extends ChangeNotifier {
                 .forEach((map) {
               Category category = _fromMap(map, sqlFormat: false);
               items.insert(0, category);
-              notifyListeners();
 
               db.insert('categories', category.toMap(),
                   conflictAlgorithm: ConflictAlgorithm.replace);
             });
+            notifyListeners();
           }
         }
       });
@@ -301,6 +310,11 @@ class Categories extends ChangeNotifier {
       Database db, Category category, String categoryId) async {
     await db.update('categories', category.toMap(),
         where: 'id = ?', whereArgs: [categoryId]);
+  }
+
+  @override
+  String toString() {
+    return items.map((e) => e.toString() + '\n').toString();
   }
 }
 

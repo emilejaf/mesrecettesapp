@@ -1,7 +1,4 @@
-import 'package:flutter_native_admob/flutter_native_admob.dart';
-import 'package:flutter_native_admob/native_admob_controller.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:mesrecettes/constants.dart';
 import 'package:mesrecettes/screens/recipe/components/recipe_preview.dart';
 import 'package:mesrecettes/screens/recipe/recipe_screen.dart';
 import 'package:mesrecettes/size_config.dart';
@@ -18,44 +15,9 @@ class RecipeList extends StatefulWidget {
 }
 
 class _RecipeListState extends State<RecipeList> {
-  NativeAdmobController _controller;
-
   void openRecipeScreen(context, recipe) {
     Navigator.push(context,
         MaterialPageRoute(builder: (context) => RecipeScreen(recipe: recipe)));
-  }
-
-  int getDivider(Orientation orientation) {
-    return orientation == Orientation.portrait ? 3 : 6;
-  }
-
-  int getItemCount(int listLength, Orientation orientation) {
-    int divider = getDivider(orientation);
-    int adsCount = (listLength / divider).floor();
-    if (adsCount >= 1 && (listLength + 1) % divider == 0) {
-      adsCount = adsCount - 1;
-    }
-
-    return listLength + adsCount;
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = NativeAdmobController();
-    _controller.setTestDeviceIds(testDevices);
-
-    if (consent == null) {
-      _controller.setNonPersonalizedAds(true);
-    } else {
-      _controller.setNonPersonalizedAds(!consent);
-    }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _controller.dispose();
   }
 
   @override
@@ -67,7 +29,7 @@ class _RecipeListState extends State<RecipeList> {
         ),
         child: OrientationBuilder(
           builder: (context, orientation) => StaggeredGridView.countBuilder(
-              itemCount: getItemCount(widget.recipeList.length, orientation),
+              itemCount: widget.recipeList.length,
               primary: true,
               crossAxisCount: orientation == Orientation.portrait ? 1 : 2,
               mainAxisSpacing: SizeConfig.defaultSize * 0.5,
@@ -78,44 +40,8 @@ class _RecipeListState extends State<RecipeList> {
                 return new StaggeredTile.fit(1);
               },
               itemBuilder: (context, index) {
-                if ((index + 1) % getDivider(orientation) == 0) {
-                  return StreamBuilder<Object>(
-                      stream: _controller.stateChanged,
-                      builder: (context, snapshot) {
-                        if (snapshot.hasError ||
-                            snapshot.data == AdLoadState.loadError ||
-                            snapshot.data == AdLoadState.loading) {
-                          return Container(
-                            height: 0,
-                          );
-                        } else {
-                          return Container(
-                            height: 100,
-                            child: Card(
-                              clipBehavior: Clip.antiAliasWithSaveLayer,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      SizeConfig.defaultSize * 0.4)),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: NativeAdmob(
-                                  adUnitID:
-                                      'ca-app-pub-8850562463084333/4731800008',
-                                  controller: _controller,
-                                  type: NativeAdmobType.banner,
-                                  error: Container(),
-                                ),
-                              ),
-                            ),
-                          );
-                        }
-                      });
-                } else {
-                  int newIndex = index -
-                      ((index + 1) / (getDivider(orientation) + 1)).floor();
-                  return buildRecipePreviewCard(
-                      context, widget.recipeList[newIndex]);
-                }
+                return buildRecipePreviewCard(
+                    context, widget.recipeList[index]);
               }),
         ),
       );

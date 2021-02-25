@@ -39,8 +39,16 @@ class Recipe {
     final map = {
       'id': id,
       'name': name,
-      'hasImage': sqlFormat ? hasImage ? 1 : 0 : hasImage,
-      'public': sqlFormat ? public ? 1 : 0 : public,
+      'hasImage': sqlFormat
+          ? hasImage
+              ? 1
+              : 0
+          : hasImage,
+      'public': sqlFormat
+          ? public
+              ? 1
+              : 0
+          : public,
       'cookTime': cookTime,
       'prepTime': prepTime,
       'people': people,
@@ -95,7 +103,7 @@ class Recipes extends ChangeNotifier {
       Recipe newRecipe,
       {List<Map<String, dynamic>> categories, Function callback}) async {
     items.removeWhere((recipe) => recipe.id == oldRecipeId);
-    items.add(newRecipe);
+    items.insert(0, newRecipe);
     notifyListeners();
 
     final Database db = await getDatabase();
@@ -307,8 +315,11 @@ class Recipes extends ChangeNotifier {
 
 Recipe fromMap(Map<String, dynamic> data,
     {bool sqlFormat = true, String appPath}) {
-  final bool hasImage =
-      sqlFormat ? data['hasImage'] == 1 ? true : false : data['hasImage'];
+  final bool hasImage = sqlFormat
+      ? data['hasImage'] == 1
+          ? true
+          : false
+      : data['hasImage'];
   final String id = data['id'];
   final String path = join(appPath, '$id.jpg');
   return Recipe(
@@ -316,8 +327,16 @@ Recipe fromMap(Map<String, dynamic> data,
       name: data['name'],
       path: hasImage ? path : '',
       hasImage: hasImage,
-      sync: sqlFormat ? data['sync'] == 1 ? true : false : true,
-      public: sqlFormat ? data['public'] == 1 ? true : false : data['public'],
+      sync: sqlFormat
+          ? data['sync'] == 1
+              ? true
+              : false
+          : true,
+      public: sqlFormat
+          ? data['public'] == 1
+              ? true
+              : false
+          : data['public'],
       cookTime: data['cookTime'],
       prepTime: data['prepTime'],
       people: data['people'],

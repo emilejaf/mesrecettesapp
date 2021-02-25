@@ -63,10 +63,10 @@ class Body extends StatelessWidget {
   }
 
   _showStartRecipeDialog(BuildContext context, List<String> steps) async {
-    await showDialog(
-        context: context,
-        child: StartRecipeDialog(
-          steps: steps,
-        ));
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (BuildContext context) => StartRecipeDialog(
+              steps: steps,
+            ),
+        fullscreenDialog: true));
   }
 }
