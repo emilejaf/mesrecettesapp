@@ -2,10 +2,13 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mesrecettes/components/my_scroll_behavior.dart';
+import 'package:mesrecettes/helpers/dynamic_link_helper.dart';
 import 'package:mesrecettes/models/category.dart';
 import 'package:mesrecettes/models/nav_item.dart';
 import 'package:mesrecettes/models/user.dart';
 import 'package:mesrecettes/screens/home/home_screen.dart';
+import 'package:mesrecettes/screens/intro/intro_screen.dart';
+import 'package:mesrecettes/size_config.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
@@ -77,7 +80,29 @@ class MyApp extends StatelessWidget {
             child: child,
           );
         },
-        home: HomeScreen(),
+        home: FutureBuilder(
+          future: isSeen(),
+          builder: (context, snapshot) {
+            SizeConfig().init(context);
+            dynamicLinkHelper.handleDynamicLinks(context);
+            if (snapshot.hasData) {
+              if (snapshot.data == true) {
+                return HomeScreen();
+              } else {
+                return IntroScreen();
+              }
+            } else {
+              return Container(
+                color: Colors.white,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                  ),
+                ),
+              );
+            }
+          },
+        ),
       ),
     );
   }

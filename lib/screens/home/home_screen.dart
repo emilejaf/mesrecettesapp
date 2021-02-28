@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:mesrecettes/components/my_drawer.dart';
 import 'package:mesrecettes/constants.dart';
-import 'package:mesrecettes/helpers/dynamic_link_helper.dart';
 import 'package:mesrecettes/models/category.dart';
 import 'package:mesrecettes/models/user.dart';
 import 'package:mesrecettes/screens/account/login/login_screen.dart';
@@ -10,14 +9,11 @@ import 'package:mesrecettes/screens/account/profile/profile_screen.dart';
 import 'package:mesrecettes/screens/create_recipe/create_recipe_screen.dart';
 import 'package:mesrecettes/screens/home/components/body.dart';
 import 'package:mesrecettes/screens/home/components/search.dart';
-import 'package:mesrecettes/size_config.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    SizeConfig().init(context);
-    dynamicLinkHelper.handleDynamicLinks(context);
     return Consumer<Categories>(
       builder: (context, categories, child) => DefaultTabController(
         length: categories.items.length + 1,

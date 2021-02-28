@@ -66,3 +66,17 @@ MobileAdTargetingInfo getTargetingInfo() {
       childDirected: false,
       testDevices: testDevices);
 }
+
+bool seen;
+
+Future<bool> isSeen() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  seen = prefs.getBool('seen') ?? false;
+  if (!seen) {
+    seen = true;
+    prefs.setBool('seen', seen);
+    return false;
+  } else {
+    return seen;
+  }
+}
