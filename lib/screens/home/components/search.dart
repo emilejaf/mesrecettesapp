@@ -36,7 +36,7 @@ class Search extends SearchDelegate<Recipe> {
 
   @override
   Widget buildResults(BuildContext context) {
-    return Container();
+    return getResults(context);
   }
 
   @override
@@ -47,20 +47,32 @@ class Search extends SearchDelegate<Recipe> {
 
   @override
   Widget buildSuggestions(BuildContext context) {
+    return getResults(context);
+  }
+
+  Widget getResults(BuildContext context) {
     Recipes recipes = Provider.of<Recipes>(context, listen: false);
-    List<Recipe> suggestionList = [];
-    suggestionList = getRecipeList(recipes.items);
-    return ListView.builder(
-      itemCount: suggestionList.length,
-      itemBuilder: (context, index) => ListTile(
-        title: Text(suggestionList[index].name),
-        //leading: query.isEmpty ? Icon(Icons.access_time) : SizedBox(),
-        leading: SizedBox(),
-        onTap: () {
-          close(context, suggestionList[index]);
-        },
-      ),
-    );
+    List<Recipe> suggestionList = getRecipeList(recipes.items);
+    if (suggestionList.isEmpty) {
+      return ListTile(
+        title: Container(
+            alignment: Alignment.topCenter,
+            padding: EdgeInsets.only(top: 16),
+            child: Text("Aucune recette trouvée")),
+      );
+    } else {
+      return ListView.separated(
+        separatorBuilder: (context, index) => Divider(),
+        itemCount: suggestionList.length,
+        itemBuilder: (context, index) => ListTile(
+          title: Text(suggestionList[index].name),
+          //leading: query.isEmpty ? Icon(Icons.access_time) : SizedBox(),
+          onTap: () {
+            close(context, suggestionList[index]);
+          },
+        ),
+      );
+    }
   }
 
   List<Recipe> getRecipeList(List<Recipe> recipes) {

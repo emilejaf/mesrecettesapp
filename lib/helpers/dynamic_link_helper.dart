@@ -48,10 +48,11 @@ class DynamicLinkHelper {
   Future<String> createRecipeLink(String recipeId) async {
     final DynamicLinkParameters parameters = DynamicLinkParameters(
         uriPrefix: 'https://mesrecettes.page.link/',
-        link: Uri.parse('https://mesrecettes.web.app/recipe?id=$recipeId'),
+        link: Uri.parse('https://mesrecettes.app/app/recipe/$recipeId'),
         androidParameters: AndroidParameters(packageName: 'com.mesrecettes'));
 
     final ShortDynamicLink shortDynamicLink = await parameters.buildShortLink();
+
     final Uri shortUrl = shortDynamicLink.shortUrl;
 
     return shortUrl.toString();

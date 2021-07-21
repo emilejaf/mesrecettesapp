@@ -103,6 +103,7 @@ class _Page4State extends State<Page4> {
     return Card(
       key: Key(index.toString() + widget.itemName),
       child: ListTile(
+        contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         title: Text(
           text,
           style: TextStyle(color: Colors.black),
@@ -133,51 +134,87 @@ class _Page4State extends State<Page4> {
 
     showDialog(
         context: context,
-        child: Form(
-          key: _formKey,
-          child: AlertDialog(
-            content: TextFormField(
-              controller: _editingController,
-              autofocus: true,
-              textCapitalization: TextCapitalization.sentences,
-              decoration:
-                  new InputDecoration(labelText: "Nom de l'" + widget.itemName),
-              validator: (String value) {
-                if (value.trim().isEmpty) {
-                  return 'Un nom est requis';
-                } else {
-                  return null;
-                }
-              },
+        child: WillPopScope(
+          onWillPop: _onBackPressed,
+          child: Form(
+            key: _formKey,
+            child: AlertDialog(
+              content: TextFormField(
+                controller: _editingController,
+                autofocus: true,
+                textCapitalization: TextCapitalization.sentences,
+                keyboardType: TextInputType.multiline,
+                maxLines: null,
+                decoration: new InputDecoration(
+                    labelText: "Nom de l'" + widget.itemName),
+                validator: (String value) {
+                  if (value.trim().isEmpty) {
+                    return 'Un nom est requis';
+                  } else {
+                    return null;
+                  }
+                },
+              ),
+              actions: [
+                FlatButton(
+                  child: Text(
+                    'Annuler',
+                    style: Theme.of(context).accentTextTheme.button,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+                FlatButton(
+                  child: Text(
+                    'Terminer',
+                    style: Theme.of(context).accentTextTheme.button,
+                  ),
+                  onPressed: () {
+                    if (_formKey.currentState.validate()) {
+                      if (oldText != null) {
+                        editItem(index, _editingController.text);
+                      } else {
+                        addItem(_editingController.text);
+                      }
+                      Navigator.pop(context);
+                    }
+                  },
+                )
+              ],
             ),
-            actions: [
+          ),
+        ));
+  }
+
+  Future<bool> _onBackPressed() {
+    return showDialog(
+          context: context,
+          builder: (context) => new AlertDialog(
+            title: new Text('Êtes-vous sûr ...'),
+            content: new Text('Souhaitez-vous annuler votre saisie ?'),
+            actions: <Widget>[
               FlatButton(
                 child: Text(
-                  'Annuler',
+                  'Non',
                   style: Theme.of(context).accentTextTheme.button,
                 ),
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.of(context).pop(false);
                 },
               ),
               FlatButton(
                 child: Text(
-                  'Terminer',
+                  'Oui',
                   style: Theme.of(context).accentTextTheme.button,
                 ),
                 onPressed: () {
-                  if (_formKey.currentState.validate()) {
-                    if (oldText != null) {
-                      editItem(index, _editingController.text);
-                    } else {
-                      addItem(_editingController.text);
-                    }
-                    Navigator.pop(context);
-                  }
+                  Navigator.of(context).pop(true);
                 },
               )
             ],
           ),
-        ));
+        ) ??
+        false;
   }
 }
